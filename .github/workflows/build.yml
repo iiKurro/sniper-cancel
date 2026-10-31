@@ -68,6 +68,15 @@ jobs:
             $bmp.Save("$PWD/shots/$name.png", [System.Drawing.Imaging.ImageFormat]::Png)
           }
           New-Item -ItemType Directory -Force shots | Out-Null
+          $key = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
+          $wv = Get-ItemProperty $key -ErrorAction SilentlyContinue
+          Write-Host "WebView2 runtime: $($wv.pv)"
+          if (-not $wv.pv) {
+            Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile wv2setup.exe
+            Start-Process ./wv2setup.exe -ArgumentList '/silent','/install' -Wait
+            $wv = Get-ItemProperty $key -ErrorAction SilentlyContinue
+            Write-Host "WebView2 runtime after install: $($wv.pv)"
+          }
           $p = Start-Process dist/SniperCancel.exe -PassThru
           Start-Sleep 5
           Shot off

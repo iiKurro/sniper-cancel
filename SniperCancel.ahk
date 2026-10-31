@@ -103,7 +103,7 @@ ShowWindow() {
         WV.Navigate("file:///" StrReplace(UiFile, "\", "/"))
     } catch as e {
         WVC := WV := WebMsgSub := 0
-        if MsgBox(T("ما قدرت أفتح الواجهة. غالبًا جهازك ناقصه مكوّن (WebView2) من مايكروسوفت.`n`nتبي أفتح صفحة تحميله؟ البرنامج نفسه شغّال وتقدر تستخدم زر التشغيل عادي.", "Couldnt open the settings window. Your PC is probably missing Microsoft WebView2.`n`nOpen its download page? The app itself still works with the on/off hotkey."), T("كاتم السنايبر", "Sniper Cancel"), "YesNo Icon!") = "Yes"
+        if MsgBox(T("ما قدرت أفتح الواجهة. غالبًا جهازك ناقصه مكوّن (WebView2) من مايكروسوفت.`n`nتبي أفتح صفحة تحميله؟ البرنامج نفسه شغّال وتقدر تستخدم زر التشغيل عادي.", "Could not open the settings window. Your PC is probably missing Microsoft WebView2.`n`nOpen its download page? The app itself still works with the on/off hotkey.") "`n`n(" e.Message ")", T("كاتم السنايبر", "Sniper Cancel"), "YesNo Icon! " RtlFlag()) = "Yes"
             Run "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
         G.Hide()
     }
@@ -149,6 +149,9 @@ OnWebMessage(sender, args) {
 
 ; النص حسب اللغة المختارة
 T(ar, en) => Cfg["Lang"] = "en" ? en : ar
+
+; رسائل ويندوز من اليمين لليسار لما تكون اللغة عربي
+RtlFlag() => Cfg["Lang"] = "en" ? "" : "0x180000"
 
 BuildTrayMenu() {
     A_TrayMenu.Delete()
@@ -292,7 +295,7 @@ CaptureKey(key) {
         Save(key)
         try BindHotkeys()
         catch {
-            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use that key, try another one."), T("كاتم السنايبر", "Sniper Cancel")
+            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use that key, try another one."), T("كاتم السنايبر", "Sniper Cancel"), RtlFlag()
             Cfg[key] := old, Save(key)
             BindHotkeys()
         }
