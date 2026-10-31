@@ -95,6 +95,8 @@ global Capturing := false
 global OnPrimary := true
 global Bound := []
 global UpdateAvailable := false, LatestVersion := ""
+global LogOn := false, LogBuf := "", LogT0 := 0
+global LogFile := SettingsDir "\log.txt"
 
 InitProfiles()
 
@@ -282,6 +284,12 @@ BuildTrayMenu() {
     A_TrayMenu.Add(T("فتح الإعدادات", "Open settings"), (*) => ShowWindow())
     A_TrayMenu.Add(T("تشغيل / إيقاف", "On / Off"), (*) => ToggleEnabled())
     A_TrayMenu.Add(T("تجربة الحركة", "Test the move"), (*) => RunTest())
+    A_TrayMenu.Add()
+    logItem := T("سجل الضغطات (للفحص)", "Key log (for checking)")
+    A_TrayMenu.Add(logItem, (*) => ToggleLog())
+    if LogOn
+        A_TrayMenu.Check(logItem)
+    A_TrayMenu.Add(T("فتح السجل", "Open the log"), (*) => OpenLog())
     A_TrayMenu.Add()
     A_TrayMenu.Add(T("خروج", "Exit"), (*) => ExitApp())
     A_TrayMenu.Default := T("فتح الإعدادات", "Open settings")
@@ -589,8 +597,66 @@ SendName(key) {
 }
 
 
-KeyDown(key) => Send("{Blind}{" SendName(key) " down}")
-KeyUp(key) => Send("{Blind}{" SendName(key) " up}")
+KeyDown(key) {
+    Send "{Blind}{" SendName(key) " down}"
+    if LogOn
+        LogAdd(key " " SendName(key) " down  (logical " (GetKeyState(key) ? "down" : "up") ")")
+}
+KeyUp(key) {
+    Send "{Blind}{" SendName(key) " up}"
+    if LogOn
+        LogAdd(key " " SendName(key) " up")
+}
+
+; ---------- سجل الضغطات ----------
+; يشتغل بس لو فعّلته من القائمة جنب الساعة. يجمع بالذاكرة وقت الحركة ويكتب الملف بعدها
+; عشان الكتابة ما تأخر التوقيت
+
+LogStart(what) {
+    global LogBuf, LogT0
+    DllCall("QueryPerformanceCounter", "int64*", &LogT0)
+    try win := WinGetProcessName("A")
+    catch
+        win := "?"
+    LogBuf := "`n=== " FormatTime(, "yyyy-MM-dd HH:mm:ss") " " what " · v" AppVersion
+        . " · window: " win " · game active: " (GameActive() ? "yes" : "no")
+        . " · mode: " (Cfg["SwapMode"] ? "two keys" : "one key")
+        . " · timings " Cfg["DelayShot"] "/" Cfg["HoldTomahawk"] "/" Cfg["DelaySwap"] "/" Cfg["SwapGap"]
+        . (Cfg["Random"] ? " random" : "") " ===`n"
+}
+
+LogAdd(text) {
+    global LogBuf
+    static freq := 0
+    if !freq
+        DllCall("QueryPerformanceFrequency", "int64*", &freq)
+    DllCall("QueryPerformanceCounter", "int64*", &now := 0)
+    LogBuf .= Format("{:7.1f} ms  {}`n", (now - LogT0) * 1000 / freq, text)
+}
+
+LogFlush() {
+    global LogBuf
+    if (LogBuf = "")
+        return
+    try FileAppend LogBuf, LogFile, "UTF-8"
+    LogBuf := ""
+}
+
+ToggleLog() {
+    global LogOn
+    LogOn := !LogOn
+    if LogOn {
+        try FileDelete LogFile
+        TrayTip T("السجل شغّال. طلّق كم طلقة ثم افتح السجل من نفس القائمة.", "Log is on. Take a few shots, then open the log from this menu."), AppTitle()
+    }
+    BuildTrayMenu()
+}
+
+OpenLog() {
+    if !FileExist(LogFile)
+        return MsgBox(T("السجل فاضي. فعّل السجل وطلّق أول.", "The log is empty. Turn it on and take a shot first."), AppTitle(), RtlFlag())
+    Run 'notepad.exe "' LogFile '"'
+}
 
 ; مدة ضغطة التبديل: ٤٠ مللي ثانية عشان اللعبة تلقطها حتى لو الفريمات قليلة
 TapKey(key, holdMs := 40) {
@@ -618,6 +684,8 @@ DoSequence() {
     back := two ? Cfg["PrimaryKey"] : Cfg["Swap"]
     toma := Cfg["Tomahawk"]
 
+    if LogOn
+        LogAdd("shot detected")
     Wait PickMs("DelayShot")
     KeyDown(toma)
     try {
@@ -633,6 +701,8 @@ DoSequence() {
         Wait 150
         TapKey(back)
     }
+    if LogOn
+        LogAdd("done")
 }
 
 OnShot(*) {
@@ -644,8 +714,11 @@ OnShot(*) {
     if (Cfg["Track"] && !OnPrimary)
         return
     Busy := true
+    if LogOn
+        LogStart("shot")
     try DoSequence()
     Busy := false
+    LogFlush()
 }
 
 ; تجربة: عد تنازلي ثم يسوي الحركة مرة وحدة (حتى لو البرنامج موقّف)
@@ -660,10 +733,13 @@ RunTest(*) {
         Sleep 1000
     }
     ToolTip T("تجربة الحركة الحين", "Testing now")
+    if LogOn
+        LogStart("test")
     try DoSequence()
     ToolTip
     FineTimer(Enabled)
     Busy := false
+    LogFlush()
 }
 
 ; ---------- المؤشر ----------
