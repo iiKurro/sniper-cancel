@@ -37,7 +37,7 @@ global Defaults := Map(
     "Trigger",      "LButton",
     "Tomahawk",     "e",
     "Swap",         "1",         ; وضع الزر الواحد: يضغطه مرتين
-    "SwapMode",     0,           ; 0 = زر واحد مرتين، 1 = زرين منفصلين
+    "SwapMode",     1,           ; 1 = زرين منفصلين (أضمن)، 0 = زر واحد مرتين
     "PistolKey",    "2",
     "PrimaryKey",   "1",
     "Toggle",       "F8",
@@ -588,12 +588,15 @@ SendName(key) {
     return sc ? Format("sc{:03X}", sc) : key
 }
 
-; ضغطة التبديل ٣٠ مللي ثانية: نفس اللي كانت تطلع فعلياً قبل ما يصير التوقيت دقيق
-TapKey(key, holdMs := 30) {
-    k := SendName(key)
-    Send "{Blind}{" k " down}"
+
+KeyDown(key) => Send("{Blind}{" SendName(key) " down}")
+KeyUp(key) => Send("{Blind}{" SendName(key) " up}")
+
+; مدة ضغطة التبديل: ٤٠ مللي ثانية عشان اللعبة تلقطها حتى لو الفريمات قليلة
+TapKey(key, holdMs := 40) {
+    KeyDown(key)
     Wait holdMs
-    Send "{Blind}{" k " up}"
+    KeyUp(key)
 }
 
 ; التوقيت اللي ينستخدم الحين: الرقم نفسه، أو رقم عشوائي بين الأقل والأعلى
@@ -604,18 +607,31 @@ PickMs(k) {
     return Random(Min(a, b), Max(a, b))
 }
 
+; الترتيب مهم:
+; ١. يمسك التوماهوك ويخليه ممسوك
+; ٢. وهو ماسكه يبدل للمسدس، هذا اللي يكنسل الرمية
+; ٣. بعدها بس يفك زر التوماهوك. لو انفك قبل التبديل اللعبة ترميه
+; ٤. يرجع للرئيسي، وفي وضع الزرين يأكد بضغطة ثانية عشان ما يعلق على المسدس
 DoSequence() {
+    two := Cfg["SwapMode"]
+    away := two ? Cfg["PistolKey"] : Cfg["Swap"]
+    back := two ? Cfg["PrimaryKey"] : Cfg["Swap"]
+    toma := Cfg["Tomahawk"]
+
     Wait PickMs("DelayShot")
-    TapKey(Cfg["Tomahawk"], PickMs("HoldTomahawk"))
-    Wait PickMs("DelaySwap")
-    if Cfg["SwapMode"] {
-        TapKey(Cfg["PistolKey"])
-        Wait PickMs("SwapGap")
-        TapKey(Cfg["PrimaryKey"])
-    } else {
-        TapKey(Cfg["Swap"])
-        Wait PickMs("SwapGap")
-        TapKey(Cfg["Swap"])
+    KeyDown(toma)
+    try {
+        Wait PickMs("HoldTomahawk")
+        Wait PickMs("DelaySwap")
+        TapKey(away)
+    } finally
+        KeyUp(toma)   ; حتى لو صار خطأ، ما يبقى زر التوماهوك ممسوك
+    Wait PickMs("SwapGap")
+    TapKey(back)
+    if two {
+        ; ضغطة تأكيد بعد ١٥٠ مللي ثانية، لو ضاعت الأولى وقت ما المسدس يطلع
+        Wait 150
+        TapKey(back)
     }
 }
 
