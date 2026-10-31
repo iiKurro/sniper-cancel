@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
   workflow_dispatch:
 
 permissions:
@@ -55,7 +55,25 @@ jobs:
           name: SniperCancel
           path: dist/SniperCancel.exe
 
+      - name: Screenshot (test branches only)
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $p = Start-Process dist/SniperCancel.exe -PassThru
+          Start-Sleep 5
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("$PWD/shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          Stop-Process -Id $p.Id -Force
+          Write-Host "SHOT_BEGIN"
+          [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD/shot.png")) -split '(.{4000})' | Where-Object { $_ } | ForEach-Object { Write-Host "SHOT:$_" }
+          Write-Host "SHOT_END"
+
       - name: Publish release
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
