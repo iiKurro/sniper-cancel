@@ -34,6 +34,17 @@ jobs:
           Expand-Archive tools/ahk2exe.zip -DestinationPath tools/ahk2exe
           Get-ChildItem -Recurse tools/ahk, tools/ahk2exe -Filter *.exe | ForEach-Object { $_.FullName }
 
+      - name: Set version number
+        shell: pwsh
+        run: |
+          $v = "1.0.${{ github.run_number }}"
+          $f = 'SniperCancel.ahk'
+          $t = [IO.File]::ReadAllText($f)
+          $t = $t -replace 'global AppVersion := "[^"]*"', "global AppVersion := `"$v`""
+          $t = $t -replace ';@Ahk2Exe-SetVersion .*', ";@Ahk2Exe-SetVersion $v"
+          [IO.File]::WriteAllText($f, $t, (New-Object Text.UTF8Encoding $true))
+          Select-String -Path $f -Pattern 'AppVersion :=|SetVersion'
+
       - name: Check script for errors
         shell: pwsh
         run: |
@@ -55,7 +66,27 @@ jobs:
           name: SniperCancel
           path: dist/SniperCancel.exe
 
-      - name: Screenshot (test branches only)
+      - name: Measure idle CPU and memory (test branches only)
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/SniperCancel.exe -PassThru
+          Start-Sleep 5
+          $p.Refresh(); $cpu0 = $p.TotalProcessorTime.TotalMilliseconds
+          Start-Sleep 30
+          $p.Refresh(); $cpu1 = $p.TotalProcessorTime.TotalMilliseconds
+          $ws = [math]::Round($p.WorkingSet64 / 1MB, 1)
+          $priv = [math]::Round($p.PrivateMemorySize64 / 1MB, 1)
+          Write-Host "Idle CPU over 30 s: $([math]::Round($cpu1 - $cpu0)) ms ($([math]::Round(($cpu1 - $cpu0) / 300, 3)) %)"
+          Write-Host "Working set: $ws MB, private: $priv MB"
+          $second = Start-Process dist/SniperCancel.exe -PassThru
+          Start-Sleep 3
+          $count = (Get-Process SniperCancel -ErrorAction SilentlyContinue).Count
+          Write-Host "Instances after second launch: $count"
+          Stop-Process -Name SniperCancel -Force
+          if ($count -ne 1) { throw "second copy kept running" }
+
+      - name: Screenshot and memory check (test branches only)
         if: github.ref != 'refs/heads/main'
         shell: pwsh
         run: |
@@ -67,23 +98,24 @@ jobs:
             $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
             $bmp.Save("$PWD/shots/$name.png", [System.Drawing.Imaging.ImageFormat]::Png)
           }
+          function WebViewMB { $w = Get-Process msedgewebview2 -ErrorAction SilentlyContinue; if ($w) { [math]::Round(($w | Measure-Object WorkingSet64 -Sum).Sum / 1MB, 1) } else { 0 } }
           New-Item -ItemType Directory -Force shots | Out-Null
           $key = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
-          $wv = Get-ItemProperty $key -ErrorAction SilentlyContinue
-          Write-Host "WebView2 runtime: $($wv.pv)"
-          if (-not $wv.pv) {
-            Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile wv2setup.exe
-            Start-Process ./wv2setup.exe -ArgumentList '/silent','/install' -Wait
-            $wv = Get-ItemProperty $key -ErrorAction SilentlyContinue
-            Write-Host "WebView2 runtime after install: $($wv.pv)"
-          }
+          Write-Host "WebView2 runtime: $((Get-ItemProperty $key -ErrorAction SilentlyContinue).pv)"
+          $before = WebViewMB
           $p = Start-Process dist/SniperCancel.exe -PassThru
-          Start-Sleep 5
+          Start-Sleep 6
           Shot off
+          Write-Host "Settings window open: webview $(WebViewMB) MB (before launch $before MB)"
           Set-Content -Encoding utf8 press.ahk 'SendLevel 1', 'Send "{F8}"'
           & tools/ahk/AutoHotkey64.exe press.ahk
           Start-Sleep 2
           Shot on
+          Set-Content -Encoding utf8 close.ahk 'WinClose "ahk_pid " A_Args[1]'
+          & tools/ahk/AutoHotkey64.exe close.ahk $p.Id
+          Start-Sleep 4
+          $p.Refresh()
+          Write-Host "After closing the window: app $([math]::Round($p.WorkingSet64 / 1MB, 1)) MB, webview $(WebViewMB) MB, app alive: $(-not $p.HasExited)"
           Stop-Process -Id $p.Id -Force
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"

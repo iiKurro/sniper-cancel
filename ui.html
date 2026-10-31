@@ -60,7 +60,7 @@
 
 /* sequence timeline */
 .seq{padding:12px 14px 10px}
-.flow{display:flex;align-items:center;direction:rtl}
+.flow{display:flex;align-items:center}
 .node{display:flex;flex-direction:column;align-items:center;gap:6px;width:62px;flex:none}
 .node .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#16181d;border:1px solid var(--line2)}
 .node .ic svg{width:19px;height:19px;stroke:var(--txt)}
@@ -107,9 +107,9 @@
 .opt b{font-size:13px;display:block}
 .opt span{font-size:11px;color:var(--dim)}
 .sw{width:44px;height:24px;border-radius:99px;background:#2a2c33;position:relative;border:1px solid var(--line2);transition:.25s;flex:none}
-.sw:after{content:"";position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:.25s;box-shadow:0 1px 3px #0008}
+.sw:after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:.25s;box-shadow:0 1px 3px #0008}
 .sw.lit{background:linear-gradient(90deg,#ff6a00,#ffb020);border-color:transparent;box-shadow:0 0 14px var(--accGlow)}
-.sw.lit:after{right:22px;background:#fff}
+.sw.lit:after{inset-inline-start:22px;background:#fff}
 
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:10.5px;color:var(--dim)}
 .foot .r{display:flex;gap:6px;align-items:center}
@@ -142,128 +142,250 @@ input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(255,122,
 .lang button.act{background:#22242b;color:var(--txt);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 html[dir=ltr] .stat .n{direction:ltr}
 html[dir=ltr] .val,html[dir=ltr] .edge em{direction:ltr}
+
+.banner{display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,122,26,.16),rgba(255,176,32,.06));border:1px solid rgba(255,122,26,.4);font-size:12.5px;font-weight:600}
+.banner.show{display:flex}
+.banner svg{width:18px;height:18px;stroke:var(--acc);flex:none}
+.banner .sp{flex:1}
+.btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font:700 12px 'Segoe UI',sans-serif;padding:7px 14px;border-radius:10px;transition:.15s;white-space:nowrap}
+.btn svg{width:14px;height:14px}
+.btn.pri{background:linear-gradient(180deg,#ff8a2a,#ff6a00);color:#1a0b00;box-shadow:0 0 18px rgba(255,122,26,.35),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sec{background:#1a1c22;border:1px solid var(--line2);color:var(--txt)}
+.btn.sec:hover{border-color:rgba(255,122,26,.45)}
+.btn.sec svg{stroke:var(--acc)}
+.btn.ghost{color:var(--muted);padding:6px 8px}
+.btn.ghost:hover{color:#ff6b6b}
+.btn.ghost svg{stroke:currentColor}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.hero .side{display:flex;flex-direction:column;align-items:center;gap:8px}
+.seg{display:flex;padding:3px;border-radius:10px;background:#0d0e12;border:1px solid var(--line2)}
+.seg button{all:unset;cursor:pointer;font:600 11.5px 'Segoe UI',sans-serif;color:var(--muted);padding:5px 11px;border-radius:7px;transition:.2s;white-space:nowrap}
+.seg button.act{background:#24262d;color:var(--txt);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.seg.sm button{padding:4px 9px;font-size:11px}
+.full{grid-column:1/-1}
+.swap{display:flex;align-items:center;gap:12px;padding:10px 12px}
+.swap .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.swap .ic svg{width:17px;height:17px;stroke:var(--muted)}
+.swap .tx{flex:1;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.swap .tx b{font-size:13px}
+.caps{display:flex;gap:10px;align-items:center}
+.capg{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.capg small{font-size:10px;color:var(--dim)}
+.capg.wait .cap{color:var(--acc);border-color:var(--acc);box-shadow:0 3px 0 #3a1800,0 0 0 4px rgba(255,122,26,.15),0 0 22px var(--accGlow);font-size:11px}
+.prof{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.prof label{font-size:12px;color:var(--muted);font-weight:600}
+.sel{position:relative;flex:1}
+.sel select{all:unset;box-sizing:border-box;width:100%;cursor:pointer;font:600 12.5px 'Segoe UI',sans-serif;color:var(--txt);background:#0d0e12;border:1px solid var(--line2);border-radius:9px;padding:6px 12px}
+.sel select option{background:#16181d;color:var(--txt)}
+.sel:after{content:"";position:absolute;top:50%;inset-inline-end:12px;width:6px;height:6px;border:solid var(--muted);border-width:0 2px 2px 0;transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.newp{display:none;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.newp.show{display:flex}
+.txt{all:unset;box-sizing:border-box;flex:1;font:600 12.5px 'Segoe UI',sans-serif;color:var(--txt);background:#0d0e12;border:1px solid var(--line2);border-radius:9px;padding:6px 12px;user-select:text;-webkit-user-select:text}
+.txt:focus{border-color:var(--acc)}
+.sub{padding:0 16px 12px 16px;display:flex;gap:8px;align-items:center}
+.opt+.sub{margin-top:-4px}
+.rows .opt{border-top:1px solid var(--line)}
+.rows .opt:first-child{border-top:0}
+.pos{display:grid;grid-template-columns:repeat(2,14px);gap:3px;direction:ltr;padding:3px;border-radius:6px;background:#0d0e12;border:1px solid var(--line2)}
+.pos i{width:14px;height:10px;border-radius:3px;background:#2a2c33;cursor:pointer;transition:.2s}
+.pos i.act{background:var(--acc);box-shadow:0 0 8px var(--accGlow)}
+.hidden{display:none!important}
+.mini.ar{font-family:'Segoe UI';font-size:10.5px}
+html[dir=ltr] .on .edge:before{animation-direction:reverse}
 </style>
 </head>
 <body>
 <div class="app">
+<div class="banner" id="banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/></svg><span id="bannerText"></span><span class="sp"></span><button class="btn pri" id="updBtn"></button></div>
+
 <div class="hd">
   <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#ff7a1a" stroke-width="2" stroke-linecap="round"><g class="ring"><circle cx="12" cy="12" r="8" stroke-dasharray="10 2.6"/></g><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/><circle cx="12" cy="12" r="1.6" fill="#ff7a1a"/></svg></div>
-  <div class="t"><h1 data-t="title">كاتم السنايبر</h1><p data-t="sub">يكتم صوت الطلقة تلقائيًا بعد كل ضربة</p></div>
+  <div class="t"><h1 data-t="title"></h1><p data-t="sub"></p></div>
   <div class="lang" id="lang"><button data-l="ar">ع</button><button data-l="en">EN</button></div>
-  <div class="pill"><i></i><span id="pill">موقّف</span></div>
+  <div class="pill"><i></i><span id="pill"></span></div>
 </div>
 
 <div class="card hero"><div class="border"></div>
   <div class="pw" id="power"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div>
-  <div class="tx"><b id="hero">الكاتم موقّف</b><span><span data-t="press">اضغط الزر أو</span> <span class="mini" id="toggleKey">F8</span> <span data-t="ingame">وانت داخل اللعبة</span></span></div>
-  <div class="stat"><div class="n" id="total">0</div><div class="l" data-t="total">مث · مدة الكاتم</div></div>
+  <div class="tx"><b id="hero"></b><span><span data-t="press"></span> <span class="mini" id="toggleKey"></span> <span data-t="ingame"></span></span><div style="font-size:11px;color:var(--dim);margin-top:3px" id="profNow"></div></div>
+  <div class="side"><div class="stat"><div class="n" id="total">0</div><div class="l" data-t="total"></div></div>
+  <button class="btn sec" id="testBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l12 8-12 8z"/></svg><span data-t="test"></span></button></div>
 </div>
 
-<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span data-t="seq">وش يصير بعد كل طلقة</span><span class="sp"></span><small data-t="order">بالترتيب</small></div>
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span data-t="seq"></span><span class="sp"></span><small data-t="order"></small></div>
 <div class="card seq"><div class="flow">
-  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><span data-t="n1">طلقة</span></div>
-  <div class="edge"><em><b id="e1">0</b><u>مث</u></em></div>
-  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><span data-t="n2">توماهوك</span></div>
-  <div class="edge"><em><b id="e2">0</b><u>مث</u></em></div>
-  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><span data-t="n3">تبديل</span></div>
-  <div class="edge"><em><b id="e3">0</b><u>مث</u></em></div>
-  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></div><span data-t="n4">رجوع</span></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><span data-t="n1"></span></div>
+  <div class="edge"><em><b id="e1">0</b><u>ms</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><span data-t="n2"></span></div>
+  <div class="edge"><em><b id="e2">0</b><u>ms</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><span id="n3"></span></div>
+  <div class="edge"><em><b id="e3">0</b><u>ms</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></div><span id="n4"></span></div>
 </div></div>
 
-<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><span data-t="keys">الأزرار</span><span class="sp"></span><small data-t="keysHint">اضغط على أي زر عشان تغيّره · Esc يلغي</small></div>
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><span data-t="keys"></span><span class="sp"></span><small data-t="keysHint"></small></div>
 <div class="grid">
-  <div class="card key" data-key="Trigger"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 2v7M6 9h6"/></svg></div><div class="tx"><b data-t="kTrigger">الطلقة</b></div><div class="cap"></div></div>
-  <div class="card key" data-key="Tomahawk"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><div class="tx"><b data-t="kTomahawk">التوماهوك</b></div><div class="cap"></div></div>
-  <div class="card key" data-key="Swap"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><div class="tx"><b data-t="kSwap">تبديل السلاح</b></div><div class="cap"></div></div>
-  <div class="card key" data-key="Toggle"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div><div class="tx"><b data-t="kToggle">تشغيل وإيقاف</b></div><div class="cap"></div></div>
+  <div class="card key" data-key="Trigger"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 2v7M6 9h6"/></svg></div><div class="tx"><b data-t="kTrigger"></b></div><div class="cap"></div></div>
+  <div class="card key" data-key="Tomahawk"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><div class="tx"><b data-t="kTomahawk"></b></div><div class="cap"></div></div>
+  <div class="card swap full"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div>
+    <div class="tx"><b data-t="kSwap"></b><div class="seg sm" id="swapMode"><button data-v="0" data-t="one"></button><button data-v="1" data-t="two"></button></div></div>
+    <div class="caps" id="caps1"><div class="capg" data-key="Swap"><div class="cap"></div><small data-t="kSwapOne"></small></div></div>
+    <div class="caps" id="caps2"><div class="capg" data-key="PistolKey"><div class="cap"></div><small data-t="kPistol"></small></div><div class="capg" data-key="PrimaryKey"><div class="cap"></div><small data-t="kPrimary"></small></div></div>
+  </div>
+  <div class="card key" data-key="Toggle"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div><div class="tx"><b data-t="kToggle"></b></div><div class="cap"></div></div>
+  <div class="card key" data-key="ProfileKey"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div class="tx"><b data-t="kProfile"></b></div><div class="cap"></div></div>
 </div>
 
-<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span data-t="timing">التوقيت</span><span class="sp"></span><small data-t="timingHint">اسحب أو اكتب الرقم</small></div>
-<div class="card sl" id="sliders"></div>
-
-<div class="card opt" style="margin-top:10px"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="tx"><b data-t="track">تعرّف تلقائي على السلاح</b><span data-t="trackHint">يشتغل بس وانت ماسك السنايبر (يحسب ضغطات التبديل)</span></div><div class="sw" id="track"></div></div>
-
-<div class="foot"><div class="r"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span data-t="foot">لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة</span></div><span style="direction:ltr" id="ver"></span></div>
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span data-t="timing"></span><span class="sp"></span><small data-t="timingHint"></small></div>
+<div class="card">
+  <div class="prof"><label data-t="profile"></label><div class="sel"><select id="profSel"></select></div>
+    <button class="btn sec" id="profAdd"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="newProf"></span></button>
+    <button class="btn ghost" id="profDel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>
+  <div class="newp" id="newp"><input class="txt" id="profName" maxlength="30"><button class="btn pri" id="profSave" data-t="save"></button><button class="btn ghost" id="profCancel" data-t="cancel"></button></div>
+  <div class="newp" id="delp"><span style="flex:1;font-size:12.5px" id="delText"></span><button class="btn pri" id="delYes" data-t="del"></button><button class="btn ghost" id="delNo" data-t="cancel"></button></div>
+  <div class="sl" id="sliders"></div>
 </div>
+
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="12" rx="4"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/></svg><span data-t="game"></span></div>
+<div class="card">
+  <div class="opt"><div class="tx"><b data-t="gameOnly"></b><span data-t="gameOnlyHint"></span></div><div class="sw" data-flag="GameOnly"></div></div>
+  <div class="sub" id="gameRow"><input class="txt" id="gameExe" dir="ltr" spellcheck="false"><button class="btn sec" id="detect"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span data-t="detect"></span></button></div>
+</div>
+
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span data-t="options"></span></div>
+<div class="card rows">
+  <div class="opt"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="tx"><b data-t="track"></b><span data-t="trackHint"></span></div><div class="sw" data-flag="Track"></div></div>
+  <div class="opt"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="7.5" cy="8.5" r="1.2"/></svg></div><div class="tx"><b data-t="indicator"></b><span data-t="indicatorHint"></span></div><div class="pos" id="pos"><i data-p="1"></i><i data-p="2"></i><i data-p="3"></i><i data-p="4"></i></div><div class="sw" data-flag="Indicator"></div></div>
+  <div class="opt"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div><div class="tx"><b data-t="updates"></b><span data-t="updatesHint"></span></div><div class="sw" data-flag="CheckUpdates"></div></div>
+</div>
+
+<div class="foot"><div class="r"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span data-t="foot"></span></div><span style="direction:ltr" id="ver"></span></div>
+</div>
+
 <script>
-const TIMING=[["DelayShot","انتظار بعد الطلقة"],["HoldTomahawk","مدة مسك التوماهوك"],["DelaySwap","انتظار قبل التبديل"],["SwapGap","بين التبديل والرجوع"]];
-const MAX=300;
-let S={cfg:{},labels:{},enabled:false,capturing:""};
-const $=id=>document.getElementById(id);
-const send=m=>{try{window.chrome.webview.postMessage(m)}catch(e){}};
-
 const I18N={
- ar:{title:"كاتم السنايبر",sub:"يكتم صوت الطلقة تلقائيًا بعد كل ضربة",press:"اضغط الزر أو",ingame:"وانت داخل اللعبة",total:"مث · مدة الكاتم",seq:"وش يصير بعد كل طلقة",order:"بالترتيب",n1:"طلقة",n2:"توماهوك",n3:"تبديل",n4:"رجوع",keys:"الأزرار",keysHint:"اضغط على أي زر عشان تغيّره · Esc يلغي",kTrigger:"الطلقة",kTomahawk:"التوماهوك",kSwap:"تبديل السلاح",kToggle:"تشغيل وإيقاف",timing:"التوقيت",timingHint:"اسحب أو اكتب الرقم",track:"تعرّف تلقائي على السلاح",trackHint:"يشتغل بس وانت ماسك السنايبر (يحسب ضغطات التبديل)",foot:"لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة",
+ ar:{title:"كاتم السنايبر",sub:"يكتم صوت الطلقة تلقائيًا بعد كل ضربة",press:"اضغط الزر أو",ingame:"وانت داخل اللعبة",total:"مث · مدة الكاتم",test:"جرّب",
+  seq:"وش يصير بعد كل طلقة",order:"بالترتيب",n1:"طلقة",n2:"توماهوك",n3:"تبديل",n4:"رجوع",n3b:"مسدس",n4b:"رئيسي",
+  keys:"الأزرار",keysHint:"اضغط على أي زر عشان تغيّره · Esc يلغي",kTrigger:"الطلقة",kTomahawk:"التوماهوك",kSwap:"تبديل السلاح",one:"زر واحد",two:"زرين",kSwapOne:"يضغطه مرتين",kPistol:"المسدس",kPrimary:"الرئيسي",kToggle:"تشغيل وإيقاف",kProfile:"تغيير الملف",
+  timing:"التوقيت",timingHint:"اسحب أو اكتب الرقم",profile:"الملف",newProf:"جديد",save:"حفظ",cancel:"إلغاء",del:"حذف",profPh:"اسم الملف، مثلاً اسم السنايبر",delAsk:"تحذف الملف «{0}»؟",profNow:"الملف الحالي: {0}",
+  game:"اللعبة",gameOnly:"يشتغل بس داخل اللعبة",gameOnlyHint:"برا اللعبة ما يلمس أي زر",detect:"تحديد تلقائي",
+  options:"خيارات",track:"تعرّف تلقائي على السلاح",trackHint:"يشتغل بس وانت ماسك السلاح الرئيسي",indicator:"مؤشر على الشاشة",indicatorHint:"يوضح إذا الكاتم شغّال واسم الملف",updates:"تنبيه التحديثات",updatesHint:"يقولك إذا نزل إصدار جديد",
+  foot:"لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة",
   on:"شغّال",off:"موقّف",heroOn:"الكاتم شغّال",heroOff:"الكاتم موقّف",wait:"اضغط زر",ms:"مث",
+  updText:"فيه إصدار جديد {0}",updBtn:"تحديث الحين",updBusy:"جاري التحميل...",
   DelayShot:"انتظار بعد الطلقة",HoldTomahawk:"مدة مسك التوماهوك",DelaySwap:"انتظار قبل التبديل",SwapGap:"بين التبديل والرجوع"},
- en:{title:"Sniper Cancel",sub:"Cancels the shot animation automatically after every hit",press:"Click the button or press",ingame:"in game",total:"ms · cancel time",seq:"What happens after each shot",order:"in order",n1:"Shot",n2:"Tomahawk",n3:"Swap",n4:"Back",keys:"Keys",keysHint:"Click a key to change it · Esc cancels",kTrigger:"Shoot",kTomahawk:"Tomahawk",kSwap:"Weapon swap",kToggle:"On / Off",timing:"Timing",timingHint:"Drag or type a number",track:"Auto weapon detection",trackHint:"Only fires while holding the sniper (counts swap presses)",foot:"Closing the window keeps it running from the tray icon",
+ en:{title:"Sniper Cancel",sub:"Cancels the shot automatically after every hit",press:"Click the button or press",ingame:"in game",total:"ms · cancel time",test:"Test",
+  seq:"What happens after each shot",order:"in order",n1:"Shot",n2:"Tomahawk",n3:"Swap",n4:"Back",n3b:"Pistol",n4b:"Primary",
+  keys:"Keys",keysHint:"Click a key to change it · Esc cancels",kTrigger:"Shoot",kTomahawk:"Tomahawk",kSwap:"Weapon swap",one:"One key",two:"Two keys",kSwapOne:"pressed twice",kPistol:"Pistol",kPrimary:"Primary",kToggle:"On / Off",kProfile:"Next profile",
+  timing:"Timing",timingHint:"Drag or type a number",profile:"Profile",newProf:"New",save:"Save",cancel:"Cancel",del:"Delete",profPh:"Profile name, e.g. the sniper",delAsk:"Delete profile “{0}”?",profNow:"Profile: {0}",
+  game:"Game",gameOnly:"Only inside the game",gameOnlyHint:"Outside the game it never touches your keys",detect:"Detect",
+  options:"Options",track:"Auto weapon detection",trackHint:"Only fires while holding the primary weapon",indicator:"On-screen indicator",indicatorHint:"Shows if it's on and the profile name",updates:"Update alerts",updatesHint:"Tells you when a new version is out",
+  foot:"Closing the window keeps it running from the tray icon",
   on:"Active",off:"Off",heroOn:"Cancel is ON",heroOff:"Cancel is OFF",wait:"Press a key",ms:"ms",
+  updText:"New version {0} is available",updBtn:"Update now",updBusy:"Downloading...",
   DelayShot:"Wait after shot",HoldTomahawk:"Hold tomahawk",DelaySwap:"Wait before swap",SwapGap:"Swap and back gap"}
 };
+const TIMING=["DelayShot","HoldTomahawk","DelaySwap","SwapGap"];
+const SLIDER_MAX=300;
 let LANG="ar";
-const tr=k=>(I18N[LANG]||I18N.ar)[k]??I18N.ar[k];
+let S={cfg:{},labels:{},profiles:[],limits:{},enabled:false,capturing:"",version:"",update:{}};
+const $=id=>document.getElementById(id);
+const send=m=>{try{window.chrome.webview.postMessage(m)}catch(e){}};
+const tr=(k,a)=>{let s=(I18N[LANG]||I18N.ar)[k]??I18N.ar[k]??"";return a!==undefined?s.replace("{0}",a):s};
+const n=k=>parseInt(S.cfg[k])||0;
+
+const box=$("sliders");
+for(const k of TIMING){
+  const r=document.createElement("div");r.className="srow";
+  r.innerHTML=`<label data-k="${k}"></label><input type="range" step="5" data-k="${k}"><div class="val"><input inputmode="numeric" maxlength="4" data-k="${k}"><u>ms</u></div>`;
+  box.appendChild(r);
+}
+function lim(k){return S.limits[k]||[0,1000]}
+box.addEventListener("input",e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  if(e.target.type==="range"){ S.cfg[k]=+e.target.value; send("set|"+k+"|"+S.cfg[k]); render(); }
+  else { const v=e.target.value.replace(/\D/g,""); e.target.value=v; const [lo,hi]=lim(k);
+    if(v!==""&&+v>=lo&&+v<=hi){ S.cfg[k]=+v; send("set|"+k+"|"+v); render(); } }
+});
+box.addEventListener("focusout",e=>{ const k=e.target.dataset.k; if(!k||e.target.type==="range")return;
+  const [lo,hi]=lim(k); let v=parseInt(e.target.value); if(isNaN(v))v=n(k); v=Math.max(lo,Math.min(hi,v));
+  S.cfg[k]=v; send("set|"+k+"|"+v); render(true); });
+
 function applyLang(){
-  document.documentElement.lang=LANG; document.documentElement.dir=LANG==="en"?"ltr":"rtl";
+  const h=document.documentElement; h.lang=LANG; h.dir=LANG==="en"?"ltr":"rtl";
   document.querySelectorAll("[data-t]").forEach(el=>el.textContent=tr(el.dataset.t));
   document.querySelectorAll(".srow label").forEach(el=>el.textContent=tr(el.dataset.k));
   document.querySelectorAll(".val u,.edge em u").forEach(el=>el.textContent=tr("ms"));
   document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("act",b.dataset.l===LANG));
+  $("profName").placeholder=tr("profPh");
   document.title=tr("title");
 }
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{ if(LANG===b.dataset.l)return; LANG=b.dataset.l; S.cfg.Lang=LANG; send("set|Lang|"+LANG); applyLang(); render(); });
-const box=$("sliders");
-for(const [k,name] of TIMING){
-  const r=document.createElement("div");r.className="srow";
-  r.innerHTML=`<label data-k="${k}">${name}</label><input type="range" min="0" max="${MAX}" step="5" data-k="${k}"><div class="val"><input inputmode="numeric" maxlength="4" data-k="${k}"><u>مث</u></div>`;
-  box.appendChild(r);
-}
-function setNum(k,v,from){
-  v=Math.max(0,Math.min(2000,parseInt(v)||0));
-  S.cfg[k]=v;
-  if(from!=="send-only") send("set|"+k+"|"+v);
-  render();
-}
-box.addEventListener("input",e=>{
-  const k=e.target.dataset.k;if(!k)return;
-  if(e.target.type==="range") setNum(k,e.target.value);
-  else { const v=e.target.value.replace(/\D/g,""); e.target.value=v; if(v!=="") setNum(k,v); }
-});
-box.addEventListener("focusout",e=>{ if(e.target.dataset.k && e.target.type!=="range") render(true); });
-
 $("power").onclick=()=>send("toggle");
-$("track").onclick=()=>{ S.cfg.Track=S.cfg.Track==1?0:1; send("set|Track|"+S.cfg.Track); render(); };
-document.querySelectorAll(".key").forEach(el=>el.onclick=()=>{ if(!S.capturing) send("capture|"+el.dataset.key); });
+$("testBtn").onclick=()=>send("test");
+$("updBtn").onclick=()=>send("update");
+$("detect").onclick=()=>send("detect");
+document.querySelectorAll("[data-flag]").forEach(el=>el.onclick=()=>{ const k=el.dataset.flag; S.cfg[k]=n(k)?0:1; send("set|"+k+"|"+S.cfg[k]); render(); });
+document.querySelectorAll("#swapMode button").forEach(b=>b.onclick=()=>{ S.cfg.SwapMode=+b.dataset.v; send("set|SwapMode|"+b.dataset.v); render(); });
+document.querySelectorAll("#pos i").forEach(el=>el.onclick=()=>{ S.cfg.IndicatorPos=+el.dataset.p; send("set|IndicatorPos|"+el.dataset.p); render(); });
+document.querySelectorAll("[data-key]").forEach(el=>el.onclick=()=>{ if(!S.capturing) send("capture|"+el.dataset.key); });
+$("gameExe").addEventListener("change",e=>send("set|GameExe|"+e.target.value.trim()));
+$("profSel").onchange=e=>send("profile|load|"+e.target.value);
+$("profAdd").onclick=()=>{ $("delp").classList.remove("show"); $("newp").classList.add("show"); $("profName").value=""; $("profName").focus(); };
+$("profCancel").onclick=()=>$("newp").classList.remove("show");
+const saveProf=()=>{ const v=$("profName").value.trim(); if(!v)return; send("profile|new|"+v); $("newp").classList.remove("show"); };
+$("profSave").onclick=saveProf;
+$("profName").addEventListener("keydown",e=>{ if(e.key==="Enter")saveProf(); if(e.key==="Escape")$("newp").classList.remove("show"); });
+$("profDel").onclick=()=>{ if(S.profiles.length<2)return; $("newp").classList.remove("show"); $("delText").textContent=tr("delAsk",S.cfg.Profile); $("delp").classList.add("show"); };
+$("delNo").onclick=()=>$("delp").classList.remove("show");
+$("delYes").onclick=()=>{ send("profile|del|"); $("delp").classList.remove("show"); };
 
 function render(force){
-  const c=S.cfg;
+  const c=S.cfg, two=n("SwapMode")===1;
   document.body.classList.toggle("on",!!S.enabled);
   $("pill").textContent=tr(S.enabled?"on":"off");
   $("hero").textContent=tr(S.enabled?"heroOn":"heroOff");
-  $("toggleKey").textContent=S.labels.Toggle||"";
-  const n=k=>parseInt(c[k])||0;
+  const tk=S.labels.Toggle||""; $("toggleKey").textContent=tk; $("toggleKey").classList.toggle("ar",/[؀-ۿ]/.test(tk));
+  $("profNow").textContent=c.Profile?tr("profNow",c.Profile):"";
   $("total").textContent=n("DelayShot")+n("HoldTomahawk")+n("DelaySwap")+n("SwapGap");
-  $("e1").textContent=n("DelayShot");
-  $("e2").textContent=n("HoldTomahawk")+n("DelaySwap");
-  $("e3").textContent=n("SwapGap");
-  document.querySelectorAll(".key").forEach(el=>{
+  $("e1").textContent=n("DelayShot"); $("e2").textContent=n("HoldTomahawk")+n("DelaySwap"); $("e3").textContent=n("SwapGap");
+  $("n3").textContent=tr(two?"n3b":"n3"); $("n4").textContent=tr(two?"n4b":"n4");
+  document.querySelectorAll("#swapMode button").forEach(b=>b.classList.toggle("act",+b.dataset.v===(two?1:0)));
+  $("caps1").classList.toggle("hidden",two); $("caps2").classList.toggle("hidden",!two);
+  document.querySelectorAll("[data-key]").forEach(el=>{
     const k=el.dataset.key, cap=el.querySelector(".cap"), w=S.capturing===k;
     el.classList.toggle("wait",w); cap.classList.toggle("wait",w);
     const t=w?tr("wait"):(S.labels[k]||"");
     cap.textContent=t; cap.classList.toggle("ar",/[؀-ۿ]/.test(t)&&!w);
   });
   box.querySelectorAll("input").forEach(i=>{
-    const v=n(i.dataset.k);
-    if(i.type==="range"){ i.value=v; i.style.setProperty("--p",Math.min(100,v/MAX*100)+"%"); }
+    const k=i.dataset.k, v=n(k), [lo]=lim(k);
+    if(i.type==="range"){ i.min=lo; i.max=Math.max(SLIDER_MAX,v); i.value=v; i.style.setProperty("--p",Math.min(100,(v-lo)/(i.max-lo)*100)+"%"); }
     else if(force||document.activeElement!==i) i.value=v;
   });
-  $("track").classList.toggle("lit",c.Track==1);
+  document.querySelectorAll("[data-flag]").forEach(el=>el.classList.toggle("lit",n(el.dataset.flag)===1));
+  document.querySelectorAll("#pos i").forEach(el=>el.classList.toggle("act",+el.dataset.p===n("IndicatorPos")));
+  $("pos").style.opacity=n("Indicator")?1:.35;
+  $("gameRow").style.opacity=n("GameOnly")?1:.45;
+  if(document.activeElement!==$("gameExe")) $("gameExe").value=c.GameExe||"";
+  const sel=$("profSel"), list=S.profiles||[];
+  if(sel.options.length!==list.length||[...sel.options].some((o,i)=>o.value!==list[i])){ sel.innerHTML=""; for(const p of list){const o=document.createElement("option");o.value=o.textContent=p;sel.appendChild(o);} }
+  sel.value=c.Profile||""; $("profDel").disabled=list.length<2;
+  const u=S.update||{}; $("banner").classList.toggle("show",!!u.available);
+  $("bannerText").textContent=tr("updText",u.latest?("v"+u.latest):"");
+  $("updBtn").textContent=tr(u.busy?"updBusy":"updBtn"); $("updBtn").disabled=!!u.busy;
+  $("ver").textContent=S.version?("v"+S.version):"";
 }
-window.chrome?.webview?.addEventListener("message",e=>{ const d=typeof e.data==="string"?JSON.parse(e.data):e.data; Object.assign(S,d); if(S.cfg.Lang&&S.cfg.Lang!==LANG){LANG=S.cfg.Lang;applyLang();} $("ver").textContent=S.version?("v"+S.version):""; render(); });
+window.chrome?.webview?.addEventListener("message",e=>{
+  const d=typeof e.data==="string"?JSON.parse(e.data):e.data; Object.assign(S,d);
+  if(S.cfg.Lang&&S.cfg.Lang!==LANG){LANG=S.cfg.Lang;applyLang();}
+  render();
+});
 document.addEventListener("contextmenu",e=>e.preventDefault());
-document.addEventListener("keydown",e=>{ if(S.capturing||(e.ctrlKey&&"rpfu".includes(e.key))||e.key==="F5") e.preventDefault(); });
-applyLang();
-render();
-send("ready");
+document.addEventListener("keydown",e=>{ if(S.capturing||(e.ctrlKey&&"rpfu".includes(e.key.toLowerCase()))||e.key==="F5") e.preventDefault(); });
+applyLang(); render(); send("ready");
 </script>
+
 </body>
 </html>
