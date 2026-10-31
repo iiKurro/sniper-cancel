@@ -34,6 +34,13 @@ jobs:
           Expand-Archive tools/ahk2exe.zip -DestinationPath tools/ahk2exe
           Get-ChildItem -Recurse tools/ahk, tools/ahk2exe -Filter *.exe | ForEach-Object { $_.FullName }
 
+      - name: Check script for errors
+        shell: pwsh
+        run: |
+          $out = & tools/ahk/AutoHotkey64.exe /ErrorStdOut /validate SniperCancel.ahk 2>&1 | Out-String
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0) { throw "script has errors" }
+
       - name: Compile
         shell: pwsh
         run: |
