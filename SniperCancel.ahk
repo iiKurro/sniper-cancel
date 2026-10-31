@@ -65,6 +65,7 @@ global G := Gui("-MaximizeBox", "كاتم السنايبر")
 G.BackColor := C.bg
 G.MarginX := 0, G.MarginY := 0
 G.SetFont("s10 c" C.txt, "Segoe UI")
+G.AddButton("x-200 y-200 w10 h10 Default")  ; ياخذ التركيز بدال أول خانة رقم
 
 ; شكل ملوّن (خلفية أو حد) بزوايا دائرية
 Shape(x, y, w, h, color, r, layer) {
@@ -83,7 +84,7 @@ Card(x, y, w, h, border := "") {
 }
 
 Label(x, y, w, h, text, opts := "", bg := "") {
-    ctl := G.AddText(Format("x{} y{} w{} h{} Right Background{} {}", x, y, w, h, bg = "" ? C.card : bg, opts), text)
+    ctl := G.AddText(Format("x{} y{} w{} h{} Right E0x2000 Background{} {}", x, y, w, h, bg = "" ? C.card : bg, opts), text)
     return ctl
 }
 
@@ -113,9 +114,9 @@ SetSwitch(sw, on) {
 ; زر بشكل مفتاح الكيبورد
 KeyCap(x, y, w, key) {
     border := Shape(x, y, w, 30, C.keyLn, 7, 2)
-    G.SetFont("s10 bold", "Consolas")
-    cap := G.AddText(Format("x{} y{} w{} h26 Center +0x200 Background{} c{}", x + 1, y + 1, w - 2, C.keyBg, C.txt), KeyLabel(Cfg[key]))
-    G.SetFont("s10 norm", "Segoe UI")
+    G.SetFont("s10 bold")
+    cap := G.AddText(Format("x{} y{} w{} h26 Center +0x200 E0x2000 Background{} c{}", x + 1, y + 1, w - 2, C.keyBg, C.txt), KeyLabel(Cfg[key]))
+    G.SetFont("s10 norm")
     Rounded.Push([cap, 6])
     obj := {border: border, cap: cap, key: key}
     MakeClickable(cap, (*) => CaptureKey(obj))
@@ -138,7 +139,7 @@ Stepper(x, y, key) {
     Rounded.Push([plus, 6])
 
     G.SetFont("s8")
-    G.AddText(Format("x{} y{} w24 h26 +0x200 Background{} c{}", x + 110, y, C.card, C.muted), "مث")
+    G.AddText(Format("x{} y{} w24 h26 +0x200 E0x2000 Background{} c{}", x + 110, y, C.card, C.muted), "مث")
     G.SetFont("s10")
 
     MakeClickable(minus, (*) => StepBy(key, edt, -5))
@@ -158,7 +159,7 @@ G.SetFont("s10 c" C.txt)
 ; شارة الحالة
 global BadgeBorder := Shape(20, 22, 84, 28, C.line, 14, 2)
 G.SetFont("s9 bold")
-global Badge := G.AddText(Format("x21 y23 w82 h26 Center +0x200 Background{} c{}", C.bg, C.muted), "")
+global Badge := G.AddText(Format("x21 y23 w82 h26 Center +0x200 E0x2000 Background{} c{}", C.bg, C.muted), "")
 Rounded.Push([Badge, 13])
 G.SetFont("s10 norm")
 
@@ -215,7 +216,7 @@ global TrackSwitch := MakeSwitch(36, y3 + 15, (*) => ToggleTrack())
 
 ; ملاحظة تحت
 G.SetFont("s8 c" C.dim)
-G.AddText(Format("x20 y{} w400 h18 Center Background{}", y3 + 66, C.bg), "لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة")
+G.AddText(Format("x20 y{} w400 h18 Center E0x2000 Background{}", y3 + 66, C.bg), "لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة")
 G.SetFont("s10 c" C.txt)
 global WinH := y3 + 92
 
@@ -340,13 +341,13 @@ UpdateStatus() {
     ToggleHint.Text := "أو اضغط " KeyLabel(Cfg["Toggle"]) " وانت داخل اللعبة"
     SetSwitch(PowerSwitch, Enabled)
     if Enabled {
-        Badge.Text := "●  شغّال"
+        Badge.Text := "شغّال  ●"
         SetColor(Badge, C.accBg, C.acc)
         SetColor(BadgeBorder, C.acc)
         SetColor(PowerCard, C.acc)
         A_IconTip := "كاتم السنايبر: شغّال"
     } else {
-        Badge.Text := "●  موقّف"
+        Badge.Text := "موقّف  ●"
         SetColor(Badge, C.bg, C.muted)
         SetColor(BadgeBorder, C.line)
         SetColor(PowerCard, C.line)
