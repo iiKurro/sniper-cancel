@@ -1,0 +1,48 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download AutoHotkey v2 and Ahk2Exe
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force tools | Out-Null
+          Invoke-WebRequest https://www.autohotkey.com/download/ahk-v2.zip -OutFile tools/ahk.zip
+          Expand-Archive tools/ahk.zip -DestinationPath tools/ahk
+          gh release download --repo AutoHotkey/Ahk2Exe --pattern "Ahk2Exe*.zip" --dir tools
+          Expand-Archive (Get-ChildItem tools/Ahk2Exe*.zip | Select-Object -First 1).FullName -DestinationPath tools/ahk2exe
+
+      - name: Compile
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $p = Start-Process tools/ahk2exe/Ahk2Exe.exe -Wait -PassThru -ArgumentList `
+            '/in', 'SniperCancel.ahk', '/out', 'dist/SniperCancel.exe', '/base', 'tools/ahk/AutoHotkey64.exe', '/silent', 'verbose'
+          if (-not (Test-Path dist/SniperCancel.exe)) { throw "compile failed (exit $($p.ExitCode))" }
+          Get-Item dist/SniperCancel.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SniperCancel
+          path: dist/SniperCancel.exe
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v1.0.${{ github.run_number }}"
+          gh release create $tag dist/SniperCancel.exe --title "كاتم السنايبر $tag" --notes "حمّل SniperCancel.exe وشغّله." --latest
