@@ -43,17 +43,17 @@ global Capturing := false
 
 ; ---------- الألوان ----------
 global C := {
-    bg:     "09090B",
-    card:   "141417",
-    line:   "27272A",
-    keyBg:  "1F1F23",
+    bg:     "0B0D10",
+    card:   "13161B",
+    line:   "262B33",
+    keyBg:  "1B1F26",
     keyLn:  "3F3F46",
     txt:    "FAFAFA",
     muted:  "A1A1AA",
     dim:    "71717A",
     off:    "3F3F46",
-    acc:    "22C55E",
-    accBg:  "052E16"
+    acc:    "F97316",
+    accBg:  "2A1405"
 }
 
 ; ---------- أدوات الرسم ----------
