@@ -66,6 +66,26 @@ jobs:
           name: SniperCancel
           path: dist/SniperCancel.exe
 
+      - name: Measure idle CPU and memory (test branches only)
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/SniperCancel.exe -PassThru
+          Start-Sleep 5
+          $p.Refresh(); $cpu0 = $p.TotalProcessorTime.TotalMilliseconds
+          Start-Sleep 30
+          $p.Refresh(); $cpu1 = $p.TotalProcessorTime.TotalMilliseconds
+          $ws = [math]::Round($p.WorkingSet64 / 1MB, 1)
+          $priv = [math]::Round($p.PrivateMemorySize64 / 1MB, 1)
+          Write-Host "Idle CPU over 30 s: $([math]::Round($cpu1 - $cpu0)) ms ($([math]::Round(($cpu1 - $cpu0) / 300, 3)) %)"
+          Write-Host "Working set: $ws MB, private: $priv MB"
+          $second = Start-Process dist/SniperCancel.exe -PassThru
+          Start-Sleep 3
+          $count = (Get-Process SniperCancel -ErrorAction SilentlyContinue).Count
+          Write-Host "Instances after second launch: $count"
+          Stop-Process -Name SniperCancel -Force
+          if ($count -ne 1) { throw "second copy kept running" }
+
       - name: Publish release
         if: github.ref == 'refs/heads/main'
         shell: pwsh

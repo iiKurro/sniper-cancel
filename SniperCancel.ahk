@@ -1,9 +1,17 @@
 ﻿; كاتم السنايبر: بعد كل طلقة يمسك التوماهوك ثم يبدل السلاح ويرجعه بسرعة
 #Requires AutoHotkey v2.0
-#SingleInstance Force
-#UseHook true
-InstallKeybdHook()
-InstallMouseHook()
+#SingleInstance Off
+; خفة: ما فيه أي تكرار يشتغل بالخلفية، كل شي يصير بس لما تضغط زر
+KeyHistory 0
+ListLines False
+
+; نسخة وحدة بس: لو البرنامج مفتوح من قبل، نفتح نافذته ونطلع
+global ShowMsg := DllCall("RegisterWindowMessage", "str", "SniperCancelShow", "uint")
+DllCall("CreateMutex", "ptr", 0, "int", false, "str", "SniperCancelSingleInstance")
+if (A_LastError = 183) {
+    DllCall("PostMessage", "ptr", 0xFFFF, "uint", ShowMsg, "ptr", 0, "ptr", 0)
+    ExitApp
+}
 SetWorkingDir A_ScriptDir
 ProcessSetPriority "High"
 
@@ -41,7 +49,8 @@ global Defaults := Map(
     "Indicator",    1,
     "IndicatorPos", 1,           ; 1 فوق يسار، 2 فوق يمين، 3 تحت يسار، 4 تحت يمين
     "CheckUpdates", 1,
-    "Profile",      "افتراضي"
+    "Profile",      "افتراضي",
+    "Lang",         "ar"         ; ar أو en
 )
 
 ; حدود التوقيت (مللي ثانية)
@@ -62,6 +71,8 @@ for k in TimingKeys
     Cfg[k] := ClampMs(k, Cfg[k])
 for k in FlagFields
     Cfg[k] := Cfg[k] ? 1 : 0
+if (Cfg["Lang"] != "en")
+    Cfg["Lang"] := "ar"
 Cfg["IndicatorPos"] := ClampInt(Cfg["IndicatorPos"], 1, 4, 1)
 
 global Enabled := false
@@ -165,13 +176,14 @@ global ToggleBtn := G.AddButton("x230 y" Y " w190 h32", "تشغيل")
 ToggleBtn.OnEvent("Click", (*) => ToggleEnabled())
 G.AddButton("x20 y" Y " w190 h32", "تجربة").OnEvent("Click", (*) => RunTest())
 Y += 40
-global UpdateText := G.AddText("x20 y" Y " w400 Center cBlue Hidden", "")
-UpdateText.OnEvent("Click", (*) => Run(DownloadUrl))
-Y += 24
+global UpdateBtn := G.AddButton("x20 y" Y " w400 h32 Hidden", "")
+UpdateBtn.OnEvent("Click", (*) => DoUpdate())
+Y += 40
 G.AddText("x20 y" Y " w400 Center cGray", "إذا سكّرت النافذة يكمل البرنامج شغله من أيقونة جنب الساعة")
 global WinH := Y + 30
 
 G.OnEvent("Close", (*) => (G.Hide(), true))
+OnMessage(ShowMsg, (*) => ShowWindow())
 
 ; ---------- المؤشر على الشاشة ----------
 global Osd := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20", "مؤشر الكاتم")
@@ -183,22 +195,37 @@ WinSetTransColor "010101", Osd
 
 ; ---------- أيقونة جنب الساعة ----------
 A_TrayMenu.Delete()
-A_TrayMenu.Add("فتح الإعدادات", (*) => G.Show())
-A_TrayMenu.Add("تشغيل / إيقاف", (*) => ToggleEnabled())
-A_TrayMenu.Add("تجربة الحركة", (*) => RunTest())
+A_TrayMenu.Add(T("فتح الإعدادات", "Open settings"), (*) => ShowWindow())
+A_TrayMenu.Add(T("تشغيل / إيقاف", "On / Off"), (*) => ToggleEnabled())
+A_TrayMenu.Add(T("تجربة الحركة", "Test the move"), (*) => RunTest())
 A_TrayMenu.Add()
-A_TrayMenu.Add("خروج", (*) => ExitApp())
-A_TrayMenu.Default := "فتح الإعدادات"
-A_IconTip := "كاتم السنايبر"
+A_TrayMenu.Add(T("خروج", "Exit"), (*) => ExitApp())
+A_TrayMenu.Default := T("فتح الإعدادات", "Open settings")
+A_IconTip := T("كاتم السنايبر", "Sniper Cancel")
 
 BindHotkeys()
 RefreshProfiles()
 RefreshSwapRows()
 UpdateStatus()
-G.Show("w440 h" WinH)
+ShowWindow()
 if Cfg["CheckUpdates"]
     SetTimer CheckUpdate, -3000
 return
+
+; نافذة وحدة بس: نفس النافذة تنعرض وتتقدم بدل ما تنفتح ثانية
+ShowWindow(*) {
+    static first := true
+    if first {
+        first := false
+        G.Show("w440 h" WinH)
+    } else
+        G.Show()
+    WinActivate G
+}
+
+; النص باللغة المختارة
+T(ar, en) => (Cfg["Lang"] = "en") ? en : ar
+AppTitle() => T("كاتم السنايبر", "Sniper Cancel")
 
 ; ---------- الإعدادات ----------
 EnsureUnicodeIni() {
@@ -249,6 +276,8 @@ SetSetting(key, value) {
         value := value ? 1 : 0
     else if (key = "IndicatorPos")
         value := ClampInt(value, 1, 4, 1)
+    else if (key = "Lang")
+        value := (value = "en") ? "en" : "ar"
     else if (key = "GameExe")
         value := Trim(value)
     else if HasValue(KeyFields, key) {
@@ -369,7 +398,7 @@ ProfileNext(*) {
             i := idx
     ProfileLoad(list[Mod(i, list.Length) + 1])
     SoundBeep 700, 80
-    OsdFlash("الملف: " Cfg["Profile"])
+    OsdFlash(T("الملف: ", "Profile: ") Cfg["Profile"])
 }
 
 RefreshProfiles() {
@@ -384,19 +413,19 @@ RefreshProfiles() {
 }
 
 AskNewProfile() {
-    r := InputBox("اكتب اسم الملف الجديد (مثلاً اسم السنايبر):", "كاتم السنايبر", "w300 h130")
+    r := InputBox(T("اكتب اسم الملف الجديد (مثلاً اسم السنايبر):", "New profile name (e.g. the sniper name):"), AppTitle(), "w300 h130")
     if (r.Result != "OK" || Trim(r.Value) = "")
         return
     if !ProfileSave(r.Value)
-        return MsgBox("الاسم ما ينفع، جرّب اسم ثاني.", "كاتم السنايبر")
+        return MsgBox(T("الاسم ما ينفع، جرّب اسم ثاني.", "Invalid name, try another."), AppTitle())
     RefreshProfiles()
 }
 
 AskDeleteProfile() {
     name := Cfg["Profile"]
     if (ProfileList().Length <= 1)
-        return MsgBox("لازم يبقى ملف واحد على الأقل.", "كاتم السنايبر")
-    if (MsgBox("تحذف الملف «" name "»؟", "كاتم السنايبر", "YesNo") = "Yes")
+        return MsgBox(T("لازم يبقى ملف واحد على الأقل.", "At least one profile must remain."), AppTitle())
+    if (MsgBox(T("تحذف الملف «", "Delete profile «") name T("»؟", "»?"), AppTitle(), "YesNo") = "Yes")
         ProfileDelete(name)
 }
 
@@ -414,7 +443,7 @@ GameActive(*) {
 
 DetectGame() {
     Loop 5 {
-        ToolTip "افتح اللعبة الحين... " (6 - A_Index)
+        ToolTip T("افتح اللعبة الحين... ", "Switch to the game now... ") (6 - A_Index)
         Sleep 1000
     }
     ToolTip
@@ -422,12 +451,12 @@ DetectGame() {
     catch
         exe := ""
     if (exe = "" || exe = "explorer.exe" || InStr(A_ScriptFullPath, exe)) {
-        MsgBox "ما لقيت اللعبة، تأكد إنك فتحتها قبل ما يخلص العد.", "كاتم السنايبر"
+        MsgBox T("ما لقيت اللعبة، تأكد إنك فتحتها قبل ما يخلص العد.", "Game not found. Open it before the countdown ends."), AppTitle()
         return
     }
     SetSetting("GameExe", exe)
     GameEdit.Value := exe
-    MsgBox "تم، البرنامج بيشتغل بس داخل: " exe, "كاتم السنايبر"
+    MsgBox T("تم، البرنامج بيشتغل بس داخل: ", "Done. It will only work inside: ") exe, AppTitle()
 }
 
 ; ---------- التشغيل ----------
@@ -437,6 +466,7 @@ ToggleEnabled(*) {
         return
     Enabled := !Enabled
     OnPrimary := true
+    BindHotkeys()
     SoundBeep Enabled ? 900 : 400, 120
     UpdateStatus()
 }
@@ -446,12 +476,12 @@ UpdateStatus() {
         StatusText.Text := "شغّال ✓"
         StatusText.SetFont("cGreen Bold")
         ToggleBtn.Text := "إيقاف"
-        A_IconTip := "كاتم السنايبر: شغّال"
+        A_IconTip := T("كاتم السنايبر: شغّال", "Sniper Cancel: on")
     } else {
         StatusText.Text := "موقّف"
         StatusText.SetFont("cRed Bold")
         ToggleBtn.Text := "تشغيل"
-        A_IconTip := "كاتم السنايبر: موقّف"
+        A_IconTip := T("كاتم السنايبر: موقّف", "Sniper Cancel: off")
     }
     OsdUpdate()
 }
@@ -465,17 +495,24 @@ BindHotkeys() {
     HotIf
     Bound := []
 
-    ; زر الطلقة وأزرار التبديل: بس داخل اللعبة
+    ; زر الطلقة وأزرار التبديل: بس وهو شغّال وداخل اللعبة
+    ; وهو موقّف ما فيه أي مراقبة للماوس أو الكيبورد أبداً
+    if Enabled
+        BindGameKeys()
+
+    ; زر التشغيل وزر الملف يتسجلون عند الويندوز مباشرة بدون مراقبة
+    BindOne(Cfg["Toggle"], ToggleEnabled)
+    if (Cfg["ProfileKey"] != "")
+        BindOne(Cfg["ProfileKey"], ProfileNext)
+}
+
+BindGameKeys() {
     BindOne("~*" Cfg["Trigger"], OnShot, GameActive)
     if Cfg["SwapMode"] {
         BindOne("~*" Cfg["PistolKey"], (*) => SetPrimary(false), GameActive)
         BindOne("~*" Cfg["PrimaryKey"], (*) => SetPrimary(true), GameActive)
     } else
         BindOne("~*" Cfg["Swap"], OnManualSwap, GameActive)
-
-    BindOne("*" Cfg["Toggle"], ToggleEnabled)
-    if (Cfg["ProfileKey"] != "")
-        BindOne("*" Cfg["ProfileKey"], ProfileNext)
 }
 
 BindOne(name, fn, ctx := "") {
@@ -550,10 +587,10 @@ RunTest(*) {
         return
     Busy := true
     Loop 3 {
-        ToolTip "تجربة الحركة بعد " (4 - A_Index) "..."
+        ToolTip T("تجربة الحركة بعد ", "Testing in ") (4 - A_Index) "..."
         Sleep 1000
     }
-    ToolTip "تجربة الحركة الحين"
+    ToolTip T("تجربة الحركة الحين", "Testing now")
     try DoSequence()
     ToolTip
     Busy := false
@@ -565,7 +602,7 @@ OsdUpdate() {
         Osd.Hide()
         return
     }
-    OsdText.Text := (Enabled ? "● الكاتم شغّال" : "● الكاتم موقّف") "  ·  " Cfg["Profile"]
+    OsdText.Text := (Enabled ? T("● الكاتم شغّال", "● Cancel ON") : T("● الكاتم موقّف", "● Cancel OFF")) "  ·  " Cfg["Profile"]
     OsdText.SetFont(Enabled ? "c22DD55" : "cFF5555")
     OsdShow()
 }
@@ -606,10 +643,48 @@ CheckUpdate() {
         return
     UpdateAvailable := true
     LatestVersion := m[1]
-    UpdateText.Text := "فيه إصدار جديد " LatestVersion " · اضغط هنا للتحميل"
-    UpdateText.Visible := true
-    try A_TrayMenu.Insert("1&", "تحميل الإصدار الجديد " LatestVersion, (*) => Run(DownloadUrl))
-    TrayTip "فيه إصدار جديد " LatestVersion ". افتح البرنامج للتحميل.", "كاتم السنايبر"
+    UpdateBtn.Text := T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion
+    UpdateBtn.Visible := true
+    try A_TrayMenu.Insert("1&", T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion, (*) => DoUpdate())
+    TrayTip T("فيه إصدار جديد ", "New version ") LatestVersion T(". اضغط تحديث من البرنامج.", " is out. Press Update in the app."), AppTitle()
+}
+
+; يحمّل النسخة الجديدة، يبدلها مكان القديمة، ويفتحها على طول
+DoUpdate(*) {
+    if !A_IsCompiled {
+        Run DownloadUrl
+        return
+    }
+    UpdateBtn.Enabled := false
+    UpdateBtn.Text := T("جاري التحميل...", "Downloading...")
+    newExe := A_Temp "\SniperCancel_new.exe"
+    try {
+        if FileExist(newExe)
+            FileDelete newExe
+        Download DownloadUrl, newExe
+        if (FileGetSize(newExe) < 100000)
+            throw Error("small")
+    } catch {
+        UpdateBtn.Enabled := true
+        UpdateBtn.Text := T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion
+        MsgBox T("ما قدرت أحمّل التحديث، تأكد من النت وجرّب مرة ثانية.", "Could not download the update. Check your internet and try again."), AppTitle()
+        return
+    }
+    ; ملف صغير ينتظر البرنامج يقفل، يبدل الملف، ويشغّل الجديد
+    bat := A_Temp "\SniperCancel_update.cmd"
+    q := Chr(34)
+    try FileDelete bat
+    FileAppend(
+        "@echo off`r`n"
+        ":wait`r`n"
+        "timeout /t 1 /nobreak >nul`r`n"
+        "tasklist /fi " q "PID eq " ProcessExist() q " | find " q " " ProcessExist() " " q " >nul && goto wait`r`n"
+        "move /y " q newExe q " " q A_ScriptFullPath q " >nul`r`n"
+        "start " q q " " q A_ScriptFullPath q "`r`n"
+        "del " q "%~f0" q "`r`n",
+        bat, "CP0")
+    Run A_ComSpec ' /c "' bat '"', , "Hide"
+    ExitApp
 }
 
 ; ---------- تعيين الأزرار ----------
@@ -621,6 +696,9 @@ CaptureKey(key) {
     edt := KeyEdits[key]
     old := Cfg[key]
     edt.Value := "اضغط الزر..."
+    ; المراقبة تشتغل بس وقت التعيين وبعدها تنطفي
+    InstallKeybdHook true
+    InstallMouseHook true
     Sleep 350  ; عشان ما ياخذ ضغطة الماوس اللي ضغطت فيها "تعيين"
 
     found := ""
@@ -646,10 +724,12 @@ CaptureKey(key) {
     edt.Value := old
     if (found != "" && found != "Escape") {
         if !SetSetting(key, found)
-            MsgBox "ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "كاتم السنايبر"
+            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use this key, try another one."), AppTitle()
     }
     if (found != "")
         KeyWait found
+    InstallKeybdHook false
+    InstallMouseHook false
     Capturing := false
     UpdateStatus()
 }
