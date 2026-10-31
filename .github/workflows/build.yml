@@ -12,18 +12,27 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download AutoHotkey v2 and Ahk2Exe
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force tools | Out-Null
-          Invoke-WebRequest https://www.autohotkey.com/download/ahk-v2.zip -OutFile tools/ahk.zip
+          $h = @{ Authorization = "Bearer $env:GH_TOKEN"; 'User-Agent' = 'sniper-cancel-build' }
+          $ahk = Invoke-RestMethod -Headers $h https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest
+          $ahkAsset = $ahk.assets | Where-Object { $_.name -like 'AutoHotkey_2*.zip' } | Select-Object -First 1
+          Write-Host "AutoHotkey: $($ahkAsset.name)"
+          Invoke-WebRequest $ahkAsset.browser_download_url -OutFile tools/ahk.zip
           Expand-Archive tools/ahk.zip -DestinationPath tools/ahk
-          gh release download --repo AutoHotkey/Ahk2Exe --pattern "Ahk2Exe*.zip" --dir tools
-          Expand-Archive (Get-ChildItem tools/Ahk2Exe*.zip | Select-Object -First 1).FullName -DestinationPath tools/ahk2exe
+          $a2e = Invoke-RestMethod -Headers $h https://api.github.com/repos/AutoHotkey/Ahk2Exe/releases/latest
+          $a2eAsset = $a2e.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1
+          Write-Host "Ahk2Exe: $($a2eAsset.name)"
+          Invoke-WebRequest $a2eAsset.browser_download_url -OutFile tools/ahk2exe.zip
+          Expand-Archive tools/ahk2exe.zip -DestinationPath tools/ahk2exe
+          Get-ChildItem -Recurse tools/ahk, tools/ahk2exe -Filter *.exe | ForEach-Object { $_.FullName }
 
       - name: Compile
         shell: pwsh
@@ -34,7 +43,7 @@ jobs:
           if (-not (Test-Path dist/SniperCancel.exe)) { throw "compile failed (exit $($p.ExitCode))" }
           Get-Item dist/SniperCancel.exe
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: SniperCancel
           path: dist/SniperCancel.exe
