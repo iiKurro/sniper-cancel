@@ -34,6 +34,17 @@ jobs:
           Expand-Archive tools/ahk2exe.zip -DestinationPath tools/ahk2exe
           Get-ChildItem -Recurse tools/ahk, tools/ahk2exe -Filter *.exe | ForEach-Object { $_.FullName }
 
+      - name: Set version number
+        shell: pwsh
+        run: |
+          $v = "1.0.${{ github.run_number }}"
+          $f = 'SniperCancel.ahk'
+          $t = [IO.File]::ReadAllText($f)
+          $t = $t -replace 'global AppVersion := "[^"]*"', "global AppVersion := `"$v`""
+          $t = $t -replace ';@Ahk2Exe-SetVersion .*', ";@Ahk2Exe-SetVersion $v"
+          [IO.File]::WriteAllText($f, $t, (New-Object Text.UTF8Encoding $true))
+          Select-String -Path $f -Pattern 'AppVersion :=|SetVersion'
+
       - name: Check script for errors
         shell: pwsh
         run: |
@@ -56,6 +67,7 @@ jobs:
           path: dist/SniperCancel.exe
 
       - name: Publish release
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
