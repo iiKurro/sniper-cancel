@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<title>كاتم السنايبر</title>
+<style>
+:root{
+  --bg:#07080a; --panel:rgba(22,24,29,.72); --panel2:#111318; --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --txt:#f4f4f5; --muted:#9a9aa3; --dim:#5d5f68;
+  --acc:#ff7a1a; --acc2:#ffb020; --accGlow:rgba(255,122,26,.45);
+  --ok:#ff7a1a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+.app{position:relative;background:var(--bg);color:var(--txt);padding:18px 22px 16px;min-height:100vh;overflow:hidden}
+/* dot grid + top glow */
+.app:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px;mask-image:linear-gradient(#000,transparent 70%);pointer-events:none}
+.app:after{content:"";position:absolute;top:-180px;left:50%;width:520px;height:360px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,122,26,.18),transparent);pointer-events:none;transition:opacity .4s;opacity:.35}
+.on .app:after{opacity:1}
+.app>*{position:relative;z-index:1}
+
+/* header */
+.hd{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#1d1f25,#0e0f12);border:1px solid var(--line2);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.logo svg{width:28px;height:28px}
+.on .logo svg .ring{animation:spin 6s linear infinite;transform-origin:50% 50%}
+.hd .t{flex:1}
+.hd h1{font-size:21px;font-weight:800;letter-spacing:-.2px}
+.hd p{font-size:12px;color:var(--muted);margin-top:1px}
+.pill{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:6px 12px 6px 14px;border-radius:99px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#52525b;position:relative}
+.on .pill{color:var(--acc);border-color:rgba(255,122,26,.35);background:rgba(255,122,26,.08)}
+.on .pill i{background:var(--acc);box-shadow:0 0 10px var(--acc)}
+.on .pill i:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--acc);animation:ping 1.6s ease-out infinite}
+
+/* cards */
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--muted);margin:13px 4px 8px}
+.h svg{width:14px;height:14px;stroke:var(--acc)}
+.h .sp{flex:1}
+.h small{font-weight:500;color:var(--dim)}
+
+/* hero power */
+.hero{display:flex;align-items:center;gap:16px;padding:13px 16px;overflow:hidden}
+.hero .border{position:absolute;inset:-1px;border-radius:16px;padding:1px;background:conic-gradient(from var(--a,0deg),transparent 0 70%,var(--acc) 85%,var(--acc2) 92%,transparent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s}
+.on .hero .border{opacity:1}
+.pw{width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 50% 35%,#24262d,#121318);border:1px solid var(--line2);box-shadow:inset 0 2px 0 rgba(255,255,255,.06),0 6px 16px #0008;transition:.3s}
+.pw svg{width:26px;height:26px;stroke:#71717a;transition:.3s}
+.on .pw{background:radial-gradient(circle at 50% 35%,#ff9a3d,#ff6a00);border-color:#ffb46b;box-shadow:0 0 0 6px rgba(255,122,26,.12),0 0 34px var(--accGlow),inset 0 2px 0 rgba(255,255,255,.35)}
+.on .pw svg{stroke:#1a0b00}
+.hero .tx{flex:1}
+.hero b{font-size:17px;font-weight:800;display:block}
+.hero span{font-size:12px;color:var(--muted)}
+.mini{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:5px;font:800 11px 'Cascadia Mono','Consolas',monospace;background:#1c1e24;border:1px solid #33353d;border-bottom-width:2px;color:var(--txt);margin:0 3px;vertical-align:1px}
+.stat{text-align:center;padding:0 4px}
+.stat .n{font:800 22px 'Cascadia Mono','Consolas',monospace;color:var(--txt);direction:ltr}
+.on .stat .n{color:var(--acc);text-shadow:0 0 18px var(--accGlow)}
+.stat .l{font-size:10.5px;color:var(--dim)}
+
+/* sequence timeline */
+.seq{padding:12px 14px 10px}
+.flow{display:flex;align-items:center;direction:rtl}
+.node{display:flex;flex-direction:column;align-items:center;gap:6px;width:62px;flex:none}
+.node .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#16181d;border:1px solid var(--line2)}
+.node .ic svg{width:19px;height:19px;stroke:var(--txt)}
+.node:first-child .ic{background:linear-gradient(145deg,rgba(255,122,26,.25),rgba(255,122,26,.05));border-color:rgba(255,122,26,.5)}
+.node:first-child .ic svg{stroke:var(--acc)}
+.node span{font-size:11px;color:var(--muted);font-weight:600}
+.edge{flex:1;position:relative;height:40px;display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+.edge:before{content:"";position:absolute;inset:50% 0 auto;height:2px;background:repeating-linear-gradient(90deg,#3a3c44 0 5px,transparent 5px 9px)}
+.on .edge:before{background:linear-gradient(90deg,transparent,var(--acc),transparent);background-size:200% 100%;animation:flow 1.4s linear infinite}
+.edge em{position:relative;font:800 11px 'Cascadia Mono','Consolas',monospace;font-style:normal;background:#0d0e12;border:1px solid var(--line2);color:var(--txt);padding:2px 7px;border-radius:99px;direction:ltr}
+.edge em u{text-decoration:none;color:var(--dim);font-weight:600;margin-left:2px}
+
+/* keys grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.key{display:flex;align-items:center;gap:10px;padding:9px 10px 9px 12px;cursor:pointer;transition:.2s}
+.key:hover{border-color:rgba(255,122,26,.35)}
+.key .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.key .ic svg{width:17px;height:17px;stroke:var(--muted)}
+.key .tx{flex:1;min-width:0}
+.key .tx b{display:block;font-size:13px;font-weight:700}
+.key .tx span{font-size:10.5px;color:var(--dim)}
+.cap{min-width:54px;height:38px;padding:0 10px;border-radius:9px;display:grid;place-items:center;font:800 14px 'Cascadia Mono','Consolas','Segoe UI',monospace;color:var(--txt);
+  background:linear-gradient(180deg,#2a2c33,#1a1b20);border:1px solid #3a3c45;box-shadow:0 3px 0 #0b0b0e,0 4px 10px #0007,inset 0 1px 0 rgba(255,255,255,.1)}
+.cap.ar{font-family:'Segoe UI';font-size:12px;font-weight:700}
+.cap.wait{color:var(--acc);border-color:var(--acc);box-shadow:0 3px 0 #3a1800,0 0 0 4px rgba(255,122,26,.15),0 0 22px var(--accGlow);animation:pulse 1.1s ease-in-out infinite;font-family:'Segoe UI';font-size:11.5px}
+.key.wait{border-color:rgba(255,122,26,.5)}
+
+/* sliders */
+.sl{padding:6px 16px}
+.srow{display:grid;grid-template-columns:118px 1fr 70px;align-items:center;gap:12px;padding:7px 0;border-top:1px solid var(--line)}
+.srow:first-child{border-top:0}
+.srow label{font-size:12.5px;font-weight:600}
+.track{position:relative;height:6px;border-radius:99px;background:#22242b;direction:ltr}
+.track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#ff6a00,#ffb020);box-shadow:0 0 12px rgba(255,122,26,.35)}
+.track .th{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(255,122,26,.25),0 2px 6px #000a}
+.val{display:flex;align-items:center;justify-content:center;gap:3px;height:28px;border-radius:8px;background:#0d0e12;border:1px solid var(--line2);font:800 13px 'Cascadia Mono','Consolas',monospace;direction:ltr}
+.val u{text-decoration:none;font:600 10px 'Segoe UI';color:var(--dim)}
+
+/* auto detect */
+.opt{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.opt .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.opt .ic svg{width:17px;height:17px;stroke:var(--muted)}
+.opt .tx{flex:1}
+.opt b{font-size:13px;display:block}
+.opt span{font-size:11px;color:var(--dim)}
+.sw{width:44px;height:24px;border-radius:99px;background:#2a2c33;position:relative;border:1px solid var(--line2);transition:.25s;flex:none}
+.sw:after{content:"";position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#d4d4d8;transition:.25s;box-shadow:0 1px 3px #0008}
+.sw.lit{background:linear-gradient(90deg,#ff6a00,#ffb020);border-color:transparent;box-shadow:0 0 14px var(--accGlow)}
+.sw.lit:after{right:22px;background:#fff}
+
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:10.5px;color:var(--dim)}
+.foot .r{display:flex;gap:6px;align-items:center}
+.foot svg{width:12px;height:12px;stroke:var(--dim)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+@keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
+@keyframes pulse{50%{box-shadow:0 3px 0 #3a1800,0 0 0 7px rgba(255,122,26,.08),0 0 30px var(--accGlow)}}
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.on .hero .border{animation:rot 4s linear infinite}
+@keyframes rot{to{--a:360deg}}
+
+html,body{background:#07080a;margin:0;height:100%}
+body{font-family:'Segoe UI Variable Text','Segoe UI',Tahoma,sans-serif;overflow-y:auto;overflow-x:hidden;user-select:none;-webkit-user-select:none}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2a2c33;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.pw:hover{transform:scale(1.04)} .pw:active{transform:scale(.97)}
+.cap:active{transform:translateY(2px);box-shadow:0 1px 0 #0b0b0e}
+.sw{cursor:pointer}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;background:transparent;margin:0;direction:ltr;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,#ff6a00,#ffb020) 0/var(--p,0%) 100% no-repeat,#22242b}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,122,26,.25),0 2px 6px #000a;transition:box-shadow .2s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(255,122,26,.3),0 2px 6px #000a}
+.val input{width:38px;background:transparent;border:0;outline:0;color:var(--txt);font:800 13px 'Cascadia Mono',Consolas,monospace;text-align:center;direction:ltr}
+.val:focus-within{border-color:var(--acc)}
+.n{transition:color .3s}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="hd">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#ff7a1a" stroke-width="2" stroke-linecap="round"><g class="ring"><circle cx="12" cy="12" r="8" stroke-dasharray="10 2.6"/></g><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/><circle cx="12" cy="12" r="1.6" fill="#ff7a1a"/></svg></div>
+  <div class="t"><h1>كاتم السنايبر</h1><p>يكتم صوت الطلقة تلقائيًا بعد كل ضربة</p></div>
+  <div class="pill"><i></i><span id="pill">موقّف</span></div>
+</div>
+
+<div class="card hero"><div class="border"></div>
+  <div class="pw" id="power" title="تشغيل / إيقاف"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div>
+  <div class="tx"><b id="hero">الكاتم موقّف</b><span>اضغط الزر أو <span class="mini" id="toggleKey">F8</span> وانت داخل اللعبة</span></div>
+  <div class="stat"><div class="n" id="total">0</div><div class="l">مث · مدة الكاتم</div></div>
+</div>
+
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>وش يصير بعد كل طلقة<span class="sp"></span><small>بالترتيب</small></div>
+<div class="card seq"><div class="flow">
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div><span>طلقة</span></div>
+  <div class="edge"><em><b id="e1">0</b><u>مث</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><span>توماهوك</span></div>
+  <div class="edge"><em><b id="e2">0</b><u>مث</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><span>تبديل</span></div>
+  <div class="edge"><em><b id="e3">0</b><u>مث</u></em></div>
+  <div class="node"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></div><span>رجوع</span></div>
+</div></div>
+
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>الأزرار<span class="sp"></span><small>اضغط على أي زر عشان تغيّره · Esc يلغي</small></div>
+<div class="grid">
+  <div class="card key" data-key="Trigger"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 2v7M6 9h6"/></svg></div><div class="tx"><b>الطلقة</b></div><div class="cap"></div></div>
+  <div class="card key" data-key="Tomahawk"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-3 3-6-6z"/><path d="M11 7L4 20"/></svg></div><div class="tx"><b>التوماهوك</b></div><div class="cap"></div></div>
+  <div class="card key" data-key="Swap"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><div class="tx"><b>تبديل السلاح</b></div><div class="cap"></div></div>
+  <div class="card key" data-key="Toggle"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></div><div class="tx"><b>تشغيل وإيقاف</b></div><div class="cap"></div></div>
+</div>
+
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>التوقيت<span class="sp"></span><small>اسحب أو اكتب الرقم</small></div>
+<div class="card sl" id="sliders"></div>
+
+<div class="card opt" style="margin-top:10px"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="tx"><b>تعرّف تلقائي على السلاح</b><span>يشتغل بس وانت ماسك السنايبر (يحسب ضغطات التبديل)</span></div><div class="sw" id="track"></div></div>
+
+<div class="foot"><div class="r"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة</div><span style="direction:ltr" id="ver"></span></div>
+</div>
+<script>
+const TIMING=[["DelayShot","انتظار بعد الطلقة"],["HoldTomahawk","مدة مسك التوماهوك"],["DelaySwap","انتظار قبل التبديل"],["SwapGap","بين التبديل والرجوع"]];
+const MAX=300;
+let S={cfg:{},labels:{},enabled:false,capturing:""};
+const $=id=>document.getElementById(id);
+const send=m=>{try{window.chrome.webview.postMessage(m)}catch(e){}};
+
+const box=$("sliders");
+for(const [k,name] of TIMING){
+  const r=document.createElement("div");r.className="srow";
+  r.innerHTML=`<label>${name}</label><input type="range" min="0" max="${MAX}" step="5" data-k="${k}"><div class="val"><input inputmode="numeric" maxlength="4" data-k="${k}"><u>مث</u></div>`;
+  box.appendChild(r);
+}
+function setNum(k,v,from){
+  v=Math.max(0,Math.min(2000,parseInt(v)||0));
+  S.cfg[k]=v;
+  if(from!=="send-only") send("set|"+k+"|"+v);
+  render();
+}
+box.addEventListener("input",e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  if(e.target.type==="range") setNum(k,e.target.value);
+  else { const v=e.target.value.replace(/\D/g,""); e.target.value=v; if(v!=="") setNum(k,v); }
+});
+box.addEventListener("focusout",e=>{ if(e.target.dataset.k && e.target.type!=="range") render(true); });
+
+$("power").onclick=()=>send("toggle");
+$("track").onclick=()=>{ S.cfg.Track=S.cfg.Track==1?0:1; send("set|Track|"+S.cfg.Track); render(); };
+document.querySelectorAll(".key").forEach(el=>el.onclick=()=>{ if(!S.capturing) send("capture|"+el.dataset.key); });
+
+function render(force){
+  const c=S.cfg;
+  document.body.classList.toggle("on",!!S.enabled);
+  $("pill").textContent=S.enabled?"شغّال":"موقّف";
+  $("hero").textContent=S.enabled?"الكاتم شغّال":"الكاتم موقّف";
+  $("toggleKey").textContent=S.labels.Toggle||"";
+  const n=k=>parseInt(c[k])||0;
+  $("total").textContent=n("DelayShot")+n("HoldTomahawk")+n("DelaySwap")+n("SwapGap");
+  $("e1").textContent=n("DelayShot");
+  $("e2").textContent=n("HoldTomahawk")+n("DelaySwap");
+  $("e3").textContent=n("SwapGap");
+  document.querySelectorAll(".key").forEach(el=>{
+    const k=el.dataset.key, cap=el.querySelector(".cap"), w=S.capturing===k;
+    el.classList.toggle("wait",w); cap.classList.toggle("wait",w);
+    const t=w?"اضغط زر":(S.labels[k]||"");
+    cap.textContent=t; cap.classList.toggle("ar",/[؀-ۿ]/.test(t)&&!w);
+  });
+  box.querySelectorAll("input").forEach(i=>{
+    const v=n(i.dataset.k);
+    if(i.type==="range"){ i.value=v; i.style.setProperty("--p",Math.min(100,v/MAX*100)+"%"); }
+    else if(force||document.activeElement!==i) i.value=v;
+  });
+  $("track").classList.toggle("lit",c.Track==1);
+}
+window.chrome?.webview?.addEventListener("message",e=>{ const d=typeof e.data==="string"?JSON.parse(e.data):e.data; Object.assign(S,d); $("ver").textContent=S.version?("v"+S.version):""; render(); });
+document.addEventListener("contextmenu",e=>e.preventDefault());
+document.addEventListener("keydown",e=>{ if(S.capturing||(e.ctrlKey&&"rpfu".includes(e.key))||e.key==="F5") e.preventDefault(); });
+render();
+send("ready");
+</script>
+</body>
+</html>
