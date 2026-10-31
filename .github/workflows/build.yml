@@ -52,6 +52,14 @@ jobs:
           Write-Host $out
           if ($LASTEXITCODE -ne 0) { throw "script has errors" }
 
+      - name: Timing accuracy (test branches only)
+        if: github.ref != 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $out = & tools/ahk/AutoHotkey64.exe /ErrorStdOut tests/timing_test.ahk 2>&1 | Out-String
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0) { throw "precise wait is off by more than 4 ms on average, or random timing is not spread" }
+
       - name: Compile
         shell: pwsh
         run: |
