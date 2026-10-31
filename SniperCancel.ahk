@@ -46,6 +46,12 @@ global Defaults := Map(
     "HoldTomahawk", 60,
     "DelaySwap",    30,
     "SwapGap",      50,
+    ; الحد الأعلى لكل توقيت (للتوقيت العشوائي). لو ما انحفظ من قبل يصير الأقل + ١٥
+    "DelayShotMax",    55,
+    "HoldTomahawkMax", 75,
+    "DelaySwapMax",    45,
+    "SwapGapMax",      65,
+    "Random",       0,           ; 1 = كل طلقة ياخذ توقيت عشوائي بين الأقل والأعلى
     "Track",        0,
     "GameOnly",     1,
     "GameExe",      "cod.exe",   ; أكثر من اسم: افصل بينها بفاصلة
@@ -64,14 +70,19 @@ global Limits := Map(
     "SwapGap",      [10, 1000]
 )
 global TimingKeys := ["DelayShot", "HoldTomahawk", "DelaySwap", "SwapGap"]
+global RangeSpread := 15     ; أول مرة: الحد الأعلى = الأقل + هالرقم
+for k in TimingKeys
+    Limits[k "Max"] := Limits[k]
 global KeyFields := ["Trigger", "Tomahawk", "Swap", "PistolKey", "PrimaryKey", "Toggle", "ProfileKey"]
-global FlagFields := ["SwapMode", "Track", "GameOnly", "Indicator", "CheckUpdates"]
+global FlagFields := ["SwapMode", "Track", "GameOnly", "Indicator", "CheckUpdates", "Random"]
 
 global Cfg := Map()
 for k, v in Defaults
     Cfg[k] := IniRead(SettingsFile, "Settings", k, v)
-for k in TimingKeys
+for k in TimingKeys {
     Cfg[k] := ClampMs(k, Cfg[k])
+    Cfg[k "Max"] := ReadMax("Settings", k)
+}
 for k in FlagFields
     Cfg[k] := Cfg[k] ? 1 : 0
 if (Cfg["Lang"] != "en")
@@ -91,6 +102,7 @@ InitProfiles()
 ; الواجهة صفحة ويب (ui.html) تنفتح بمحرك الويب اللي جاي مع ويندوز
 ; تنبني بس لما تفتح النافذة، وأول ما تسكّرها تنمسح كاملة من الذاكرة
 #Include lib\WebView2\WebView2.ahk
+#Include lib\Timing.ahk
 
 if A_IsCompiled {
     ; لو الملف مستخدم (نسخة ثانية فاتحة) نكمل عادي
@@ -310,6 +322,14 @@ ClampMs(key, v) {
     return ClampInt(v, lim[1], lim[2], Defaults[key])
 }
 
+; الحد الأعلى للتوقيت العشوائي. لو ما انحفظ أو طلع أقل من الأقل: الأقل + شوي
+ReadMax(section, k) {
+    v := IniRead(SettingsFile, section, k "Max", "")
+    if !IsInteger(v) || (Integer(v) < Cfg[k])
+        v := Cfg[k] + RangeSpread
+    return Max(Cfg[k], ClampMs(k "Max", v))
+}
+
 Save(key) {
     IniWrite Cfg[key], SettingsFile, "Settings", key
 }
@@ -407,8 +427,10 @@ ProfileSave(name) {
     name := Trim(name)
     if (name = "" || InStr(name, "]"))
         return false
-    for k in TimingKeys
+    for k in TimingKeys {
         IniWrite Cfg[k], SettingsFile, ProfileSection(name), k
+        IniWrite Cfg[k "Max"], SettingsFile, ProfileSection(name), k "Max"
+    }
     Cfg["Profile"] := name
     Save("Profile")
     return true
@@ -419,7 +441,9 @@ ProfileLoad(name, refresh := true) {
         return false
     for k in TimingKeys {
         Cfg[k] := ClampMs(k, IniRead(SettingsFile, ProfileSection(name), k, Cfg[k]))
+        Cfg[k "Max"] := ReadMax(ProfileSection(name), k)
         Save(k)
+        Save(k "Max")
     }
     Cfg["Profile"] := name
     Save("Profile")
@@ -491,6 +515,7 @@ ToggleEnabled(*) {
         return
     Enabled := !Enabled
     OnPrimary := true
+    FineTimer(Enabled)
     BindHotkeys()
     SoundBeep Enabled ? 900 : 400, 120
     UpdateStatus()
@@ -563,24 +588,33 @@ SendName(key) {
     return sc ? Format("sc{:03X}", sc) : key
 }
 
-TapKey(key, holdMs := 20) {
+; ضغطة التبديل ٣٠ مللي ثانية: نفس اللي كانت تطلع فعلياً قبل ما يصير التوقيت دقيق
+TapKey(key, holdMs := 30) {
     k := SendName(key)
     Send "{Blind}{" k " down}"
-    Sleep holdMs
+    Wait holdMs
     Send "{Blind}{" k " up}"
 }
 
+; التوقيت اللي ينستخدم الحين: الرقم نفسه، أو رقم عشوائي بين الأقل والأعلى
+PickMs(k) {
+    if !Cfg["Random"]
+        return Cfg[k]
+    a := Cfg[k], b := Cfg[k "Max"]
+    return Random(Min(a, b), Max(a, b))
+}
+
 DoSequence() {
-    Sleep Cfg["DelayShot"]
-    TapKey(Cfg["Tomahawk"], Cfg["HoldTomahawk"])
-    Sleep Cfg["DelaySwap"]
+    Wait PickMs("DelayShot")
+    TapKey(Cfg["Tomahawk"], PickMs("HoldTomahawk"))
+    Wait PickMs("DelaySwap")
     if Cfg["SwapMode"] {
         TapKey(Cfg["PistolKey"])
-        Sleep Cfg["SwapGap"]
+        Wait PickMs("SwapGap")
         TapKey(Cfg["PrimaryKey"])
     } else {
         TapKey(Cfg["Swap"])
-        Sleep Cfg["SwapGap"]
+        Wait PickMs("SwapGap")
         TapKey(Cfg["Swap"])
     }
 }
@@ -604,6 +638,7 @@ RunTest(*) {
     if (Busy || Capturing)
         return
     Busy := true
+    FineTimer(true)
     Loop 3 {
         ToolTip T("تجربة الحركة بعد ", "Testing in ") (4 - A_Index) "..."
         Sleep 1000
@@ -611,6 +646,7 @@ RunTest(*) {
     ToolTip T("تجربة الحركة الحين", "Testing now")
     try DoSequence()
     ToolTip
+    FineTimer(Enabled)
     Busy := false
 }
 

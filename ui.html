@@ -193,6 +193,26 @@ html[dir=ltr] .val,html[dir=ltr] .edge em{direction:ltr}
 .hidden{display:none!important}
 .mini.ar{font-family:'Segoe UI';font-size:10.5px}
 html[dir=ltr] .on .edge:before{animation-direction:reverse}
+
+/* random timing: low and high per row */
+.rnd{padding:10px 16px;border-bottom:1px solid var(--line)}
+.srow{grid-template-columns:118px 1fr auto}
+.vals{display:flex;align-items:center;gap:5px;direction:ltr}
+.vals .val{width:70px}
+.vals .dash{color:var(--dim);font-weight:700;font-size:12px}
+.rand .vals .val{width:auto;padding:0 7px}
+.rand .vals .val input{width:32px}
+.rand .vals .val:first-child u{display:none}
+body:not(.rand) .r-only{display:none!important}
+.rng{position:relative;height:16px;direction:ltr}
+.rng input[type=range]{position:absolute;left:0;top:0}
+.rand .rng input[type=range]{pointer-events:none}
+.rand .rng input[type=range]::-webkit-slider-thumb{pointer-events:auto}
+.rand .rng input[type=range]::-webkit-slider-runnable-track{background:transparent}
+.rand .rng:before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;transform:translateY(-50%);border-radius:99px;
+  background:linear-gradient(90deg,#22242b calc(8px + (100% - 16px)*var(--lo,0)),#ff6a00 calc(8px + (100% - 16px)*var(--lo,0)),#ffb020 calc(8px + (100% - 16px)*var(--hi,0)),#22242b calc(8px + (100% - 16px)*var(--hi,0)))}
+.rand .stat .n{font-size:18px}
+.rand .edge em u{display:none}
 </style>
 </head>
 <body>
@@ -237,13 +257,14 @@ html[dir=ltr] .on .edge:before{animation-direction:reverse}
   <div class="card key" data-key="ProfileKey"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div class="tx"><b data-t="kProfile"></b></div><div class="cap"></div></div>
 </div>
 
-<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span data-t="timing"></span><span class="sp"></span><small data-t="timingHint"></small></div>
+<div class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span data-t="timing"></span><span class="sp"></span><small id="tHint"></small></div>
 <div class="card">
   <div class="prof"><label data-t="profile"></label><div class="sel"><select id="profSel"></select></div>
     <button class="btn sec" id="profAdd"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="newProf"></span></button>
     <button class="btn ghost" id="profDel"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>
   <div class="newp" id="newp"><input class="txt" id="profName" maxlength="30"><button class="btn pri" id="profSave" data-t="save"></button><button class="btn ghost" id="profCancel" data-t="cancel"></button></div>
   <div class="newp" id="delp"><span style="flex:1;font-size:12.5px" id="delText"></span><button class="btn pri" id="delYes" data-t="del"></button><button class="btn ghost" id="delNo" data-t="cancel"></button></div>
+  <div class="opt rnd"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg></div><div class="tx"><b data-t="random"></b><span data-t="randomHint"></span></div><div class="sw" data-flag="Random"></div></div>
   <div class="sl" id="sliders"></div>
 </div>
 
@@ -268,7 +289,7 @@ const I18N={
  ar:{title:"كاتم السنايبر",sub:"يكتم صوت الطلقة تلقائيًا بعد كل ضربة",press:"اضغط الزر أو",ingame:"وانت داخل اللعبة",total:"مث · مدة الكاتم",test:"جرّب",
   seq:"وش يصير بعد كل طلقة",order:"بالترتيب",n1:"طلقة",n2:"توماهوك",n3:"تبديل",n4:"رجوع",n3b:"مسدس",n4b:"رئيسي",
   keys:"الأزرار",keysHint:"اضغط على أي زر عشان تغيّره · Esc يلغي",kTrigger:"الطلقة",kTomahawk:"التوماهوك",kSwap:"تبديل السلاح",one:"زر واحد",two:"زرين",kSwapOne:"يضغطه مرتين",kPistol:"المسدس",kPrimary:"الرئيسي",kToggle:"تشغيل وإيقاف",kProfile:"تغيير الملف",
-  timing:"التوقيت",timingHint:"اسحب أو اكتب الرقم",profile:"الملف",newProf:"جديد",save:"حفظ",cancel:"إلغاء",del:"حذف",profPh:"اسم الملف، مثلاً اسم السنايبر",delAsk:"تحذف الملف «{0}»؟",profNow:"الملف الحالي: {0}",
+  timing:"التوقيت",timingHint:"اسحب أو اكتب الرقم",timingHintR:"حدد أقل وأعلى رقم",random:"توقيت عشوائي",randomHint:"كل طلقة ياخذ رقم عشوائي بين الأقل والأعلى",profile:"الملف",newProf:"جديد",save:"حفظ",cancel:"إلغاء",del:"حذف",profPh:"اسم الملف، مثلاً اسم السنايبر",delAsk:"تحذف الملف «{0}»؟",profNow:"الملف الحالي: {0}",
   game:"اللعبة",gameOnly:"يشتغل بس داخل اللعبة",gameOnlyHint:"برا اللعبة ما يلمس أي زر",detect:"تحديد تلقائي",
   options:"خيارات",track:"تعرّف تلقائي على السلاح",trackHint:"يشتغل بس وانت ماسك السلاح الرئيسي",indicator:"مؤشر على الشاشة",indicatorHint:"يوضح إذا الكاتم شغّال واسم الملف",updates:"تنبيه التحديثات",updatesHint:"يقولك إذا نزل إصدار جديد",
   foot:"لو سكّرت النافذة يكمل شغله من الأيقونة اللي جنب الساعة",
@@ -278,7 +299,7 @@ const I18N={
  en:{title:"Sniper Cancel",sub:"Cancels the shot automatically after every hit",press:"Click the button or press",ingame:"in game",total:"ms · cancel time",test:"Test",
   seq:"What happens after each shot",order:"in order",n1:"Shot",n2:"Tomahawk",n3:"Swap",n4:"Back",n3b:"Pistol",n4b:"Primary",
   keys:"Keys",keysHint:"Click a key to change it · Esc cancels",kTrigger:"Shoot",kTomahawk:"Tomahawk",kSwap:"Weapon swap",one:"One key",two:"Two keys",kSwapOne:"pressed twice",kPistol:"Pistol",kPrimary:"Primary",kToggle:"On / Off",kProfile:"Next profile",
-  timing:"Timing",timingHint:"Drag or type a number",profile:"Profile",newProf:"New",save:"Save",cancel:"Cancel",del:"Delete",profPh:"Profile name, e.g. the sniper",delAsk:"Delete profile “{0}”?",profNow:"Profile: {0}",
+  timing:"Timing",timingHint:"Drag or type a number",timingHintR:"Set the low and the high",random:"Random timing",randomHint:"Every shot picks a random value between low and high",profile:"Profile",newProf:"New",save:"Save",cancel:"Cancel",del:"Delete",profPh:"Profile name, e.g. the sniper",delAsk:"Delete profile “{0}”?",profNow:"Profile: {0}",
   game:"Game",gameOnly:"Only inside the game",gameOnlyHint:"Outside the game it never touches your keys",detect:"Detect",
   options:"Options",track:"Auto weapon detection",trackHint:"Only fires while holding the primary weapon",indicator:"On-screen indicator",indicatorHint:"Shows if it's on and the profile name",updates:"Update alerts",updatesHint:"Tells you when a new version is out",
   foot:"Closing the window keeps it running from the tray icon",
@@ -298,19 +319,33 @@ const n=k=>parseInt(S.cfg[k])||0;
 const box=$("sliders");
 for(const k of TIMING){
   const r=document.createElement("div");r.className="srow";
-  r.innerHTML=`<label data-k="${k}"></label><input type="range" step="5" data-k="${k}"><div class="val"><input inputmode="numeric" maxlength="4" data-k="${k}"><u>ms</u></div>`;
+  r.innerHTML=`<label data-k="${k}"></label><div class="rng"><input type="range" step="5" data-k="${k}"><input type="range" step="5" data-k="${k}Max" class="r-only"></div>`
+    +`<div class="vals"><div class="val"><input inputmode="numeric" maxlength="4" data-k="${k}"><u>ms</u></div><span class="dash r-only">–</span><div class="val r-only"><input inputmode="numeric" maxlength="4" data-k="${k}Max"><u>ms</u></div></div>`;
   box.appendChild(r);
 }
 function lim(k){return S.limits[k]||[0,1000]}
+const rnd=()=>n("Random")===1;
+const baseOf=k=>k.replace(/Max$/,"");
+function put(k,v){ S.cfg[k]=v; send("set|"+k+"|"+v); }
+// يغيّر توقيت ويخلي الأقل دايم أصغر من أو يساوي الأعلى: اللي تغيّره يمشي، والثاني يلحقه
+// والعشوائي طافي: الأعلى يمشي مع الرقم عشان يبقى نفس النطاق لما تشغّله
+function setTiming(k,v){
+  const b=baseOf(k), m=b+"Max";
+  if(!rnd()&&k===b) put(m,Math.min(lim(m)[1],v+Math.max(0,n(m)-n(b))));
+  put(k,v);
+  if(n(b)>n(m)){ if(k===m) put(b,n(m)); else put(m,n(b)); }
+}
 box.addEventListener("input",e=>{
   const k=e.target.dataset.k;if(!k)return;
-  if(e.target.type==="range"){ S.cfg[k]=+e.target.value; send("set|"+k+"|"+S.cfg[k]); render(); }
+  if(e.target.type==="range"){ setTiming(k,+e.target.value); render(); }
   else { const v=e.target.value.replace(/\D/g,""); e.target.value=v; const [lo,hi]=lim(k);
-    if(v!==""&&+v>=lo&&+v<=hi){ S.cfg[k]=+v; send("set|"+k+"|"+v); render(); } }
+    // وانت تكتب الأعلى (مثلاً ١٢٠) ما نرسل "١" و"١٢" عشان ما يسحبون الأقل معهم
+    const early=k!==baseOf(k)&&+v<n(baseOf(k));
+    if(v!==""&&+v>=lo&&+v<=hi&&!early){ setTiming(k,+v); render(); } }
 });
 box.addEventListener("focusout",e=>{ const k=e.target.dataset.k; if(!k||e.target.type==="range")return;
   const [lo,hi]=lim(k); let v=parseInt(e.target.value); if(isNaN(v))v=n(k); v=Math.max(lo,Math.min(hi,v));
-  S.cfg[k]=v; send("set|"+k+"|"+v); render(true); });
+  setTiming(k,v); render(true); });
 
 function applyLang(){
   const h=document.documentElement; h.lang=LANG; h.dir=LANG==="en"?"ltr":"rtl";
@@ -344,12 +379,16 @@ $("delYes").onclick=()=>{ send("profile|del|"); $("delp").classList.remove("show
 function render(force){
   const c=S.cfg, two=n("SwapMode")===1;
   document.body.classList.toggle("on",!!S.enabled);
+  const R=rnd(); document.body.classList.toggle("rand",R);
+  // المجموع: رقم واحد، أو "من–إلى" لو العشوائي شغّال
+  const sum=(...ks)=>{ const a=ks.reduce((s,k)=>s+n(k),0), b=ks.reduce((s,k)=>s+n(k+"Max"),0); return R&&b!==a?a+"–"+b:""+a; };
+  $("tHint").textContent=tr(R?"timingHintR":"timingHint");
   $("pill").textContent=tr(S.enabled?"on":"off");
   $("hero").textContent=tr(S.enabled?"heroOn":"heroOff");
   const tk=S.labels.Toggle||""; $("toggleKey").textContent=tk; $("toggleKey").classList.toggle("ar",/[؀-ۿ]/.test(tk));
   $("profNow").textContent=c.Profile?tr("profNow",c.Profile):"";
-  $("total").textContent=n("DelayShot")+n("HoldTomahawk")+n("DelaySwap")+n("SwapGap");
-  $("e1").textContent=n("DelayShot"); $("e2").textContent=n("HoldTomahawk")+n("DelaySwap"); $("e3").textContent=n("SwapGap");
+  $("total").textContent=sum(...TIMING);
+  $("e1").textContent=sum("DelayShot"); $("e2").textContent=sum("HoldTomahawk","DelaySwap"); $("e3").textContent=sum("SwapGap");
   $("n3").textContent=tr(two?"n3b":"n3"); $("n4").textContent=tr(two?"n4b":"n4");
   document.querySelectorAll("#swapMode button").forEach(b=>b.classList.toggle("act",+b.dataset.v===(two?1:0)));
   $("caps1").classList.toggle("hidden",two); $("caps2").classList.toggle("hidden",!two);
@@ -359,11 +398,17 @@ function render(force){
     const t=w?tr("wait"):(S.labels[k]||"");
     cap.textContent=t; cap.classList.toggle("ar",/[؀-ۿ]/.test(t)&&!w);
   });
-  box.querySelectorAll("input").forEach(i=>{
-    const k=i.dataset.k, v=n(k), [lo]=lim(k);
-    if(i.type==="range"){ i.min=lo; i.max=Math.max(SLIDER_MAX,v); i.value=v; i.style.setProperty("--p",Math.min(100,(v-lo)/(i.max-lo)*100)+"%"); }
-    else if(force||document.activeElement!==i) i.value=v;
-  });
+  for(const k of TIMING){
+    const m=k+"Max", a=n(k), b=n(m), [lo]=lim(k);
+    const top=Math.max(SLIDER_MAX,a,R?b:0), f=v=>Math.min(1,(v-lo)/(top-lo));
+    const ra=box.querySelector(`input[type=range][data-k="${k}"]`), rb=box.querySelector(`input[type=range][data-k="${m}"]`);
+    for(const [r,v] of [[ra,a],[rb,b]]){ r.min=lo; r.max=top; r.value=v; }
+    ra.style.setProperty("--p",f(a)*100+"%");
+    ra.parentNode.style.setProperty("--lo",f(a)); ra.parentNode.style.setProperty("--hi",f(b));
+    // لو المقبضين فوق بعض: اللي يقدر يتحرك يكون فوق
+    ra.style.zIndex=a>=b&&a>(lo+top)/2?3:1; rb.style.zIndex=2;
+  }
+  box.querySelectorAll("input:not([type=range])").forEach(i=>{ if(force||document.activeElement!==i) i.value=n(i.dataset.k); });
   document.querySelectorAll("[data-flag]").forEach(el=>el.classList.toggle("lit",n(el.dataset.flag)===1));
   document.querySelectorAll("#pos i").forEach(el=>el.classList.toggle("act",+el.dataset.p===n("IndicatorPos")));
   $("pos").style.opacity=n("Indicator")?1:.35;
