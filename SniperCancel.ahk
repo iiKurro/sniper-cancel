@@ -49,8 +49,8 @@ global AppVersion := "2.0.0"
 ; الواجهة صفحة ويب صغيرة تنفتح بمحرك الويب اللي جاي مع ويندوز
 ; وتنقفل كاملة أول ما تسكّر النافذة عشان يبقى البرنامج خفيف بالخلفية
 if A_IsCompiled {
-    try FileInstall "ui.html", SettingsDir "\ui.html", 1
-    try FileInstall "lib\WebView2\64bit\WebView2Loader.dll", SettingsDir "\WebView2Loader.dll", 1
+    FileInstall "ui.html", SettingsDir "\ui.html", 1
+    FileInstall "lib\WebView2\64bit\WebView2Loader.dll", SettingsDir "\WebView2Loader.dll", 1
 }
 global UiFile := A_IsCompiled ? SettingsDir "\ui.html" : A_ScriptDir "\ui.html"
 global LoaderDll := A_IsCompiled ? SettingsDir "\WebView2Loader.dll" : A_ScriptDir "\lib\WebView2\64bit\WebView2Loader.dll"
