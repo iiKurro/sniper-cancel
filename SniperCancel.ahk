@@ -191,6 +191,8 @@ CaptureKey(key, edt) {
             vk := A_Index
             if (vk = 0x10 || vk = 0x11 || vk = 0x12)  ; نتجاهل النسخ العامة من شفت وكنترول وألت
                 continue
+            if (vk >= 0x9C && vk <= 0x9F)  ; أكواد عجلة الماوس الوهمية: تطلع مضغوطة دايم فتنمسك بدون ما تضغط شي
+                continue
             if GetKeyState(Format("vk{:02X}", vk), "P") {
                 name := GetKeyName(Format("vk{:02X}", vk))
                 if (name != "") {
