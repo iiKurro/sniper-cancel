@@ -28,7 +28,8 @@ global Defaults := Map(
     "HoldTomahawk", 60,
     "DelaySwap", 30,
     "SwapGap",   50,
-    "Track",     0
+    "Track",     0,
+    "Lang",      "ar"
 )
 
 global Cfg := Map()
@@ -56,20 +57,14 @@ global LoaderDll := A_IsCompiled ? SettingsDir "\WebView2Loader.dll" : A_ScriptD
 
 global WVC := 0, WV := 0, WebMsgSub := 0
 
-global G := Gui("-MaximizeBox", "كاتم السنايبر")
+global G := Gui("-MaximizeBox", T("كاتم السنايبر", "Sniper Cancel"))
 G.BackColor := "07080A"
 G.MarginX := 0, G.MarginY := 0
 G.OnEvent("Close", (*) => (CloseWindow(), true))
 G.OnEvent("Size", (*) => (WVC && WVC.Fill()))
 
 ; ---------- أيقونة جنب الساعة ----------
-A_TrayMenu.Delete()
-A_TrayMenu.Add("فتح الإعدادات", (*) => ShowWindow())
-A_TrayMenu.Add("تشغيل / إيقاف", (*) => ToggleEnabled())
-A_TrayMenu.Add()
-A_TrayMenu.Add("خروج", (*) => ExitApp())
-A_TrayMenu.Default := "فتح الإعدادات"
-A_IconTip := "كاتم السنايبر"
+BuildTrayMenu()
 
 BindHotkeys()
 UpdateStatus()
@@ -108,7 +103,7 @@ ShowWindow() {
         WV.Navigate("file:///" StrReplace(UiFile, "\", "/"))
     } catch as e {
         WVC := WV := WebMsgSub := 0
-        if MsgBox("ما قدرت أفتح الواجهة. غالبًا جهازك ناقصه مكوّن (WebView2) من مايكروسوفت.`n`nتبي أفتح صفحة تحميله؟ البرنامج نفسه شغّال وتقدر تستخدم F8 عادي.", "كاتم السنايبر", "YesNo Icon!") = "Yes"
+        if MsgBox(T("ما قدرت أفتح الواجهة. غالبًا جهازك ناقصه مكوّن (WebView2) من مايكروسوفت.`n`nتبي أفتح صفحة تحميله؟ البرنامج نفسه شغّال وتقدر تستخدم زر التشغيل عادي.", "Couldnt open the settings window. Your PC is probably missing Microsoft WebView2.`n`nOpen its download page? The app itself still works with the on/off hotkey."), T("كاتم السنايبر", "Sniper Cancel"), "YesNo Icon!") = "Yes"
             Run "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
         G.Hide()
     }
@@ -135,6 +130,14 @@ OnWebMessage(sender, args) {
             if (parts.Length >= 2 && RegExMatch(parts[2], "^(Trigger|Tomahawk|Swap|Toggle)$"))
                 SetTimer(CaptureKey.Bind(parts[2]), -1)
         case "set":
+            if (parts.Length >= 3 && parts[2] = "Lang" && RegExMatch(parts[3], "^(ar|en)$")) {
+                Cfg["Lang"] := parts[3]
+                Save("Lang")
+                G.Title := T("كاتم السنايبر", "Sniper Cancel")
+                BuildTrayMenu()
+                UpdateStatus()
+                return
+            }
             if (parts.Length >= 3 && RegExMatch(parts[2], "^(DelayShot|HoldTomahawk|DelaySwap|SwapGap|Track)$") && IsInteger(parts[3])) {
                 v := Integer(parts[3])
                 v := parts[2] = "Track" ? (v ? 1 : 0) : Max(0, Min(2000, v))
@@ -142,6 +145,18 @@ OnWebMessage(sender, args) {
                 Save(parts[2])
             }
     }
+}
+
+; النص حسب اللغة المختارة
+T(ar, en) => Cfg["Lang"] = "en" ? en : ar
+
+BuildTrayMenu() {
+    A_TrayMenu.Delete()
+    A_TrayMenu.Add(T("فتح الإعدادات", "Open settings"), (*) => ShowWindow())
+    A_TrayMenu.Add(T("تشغيل / إيقاف", "On / Off"), (*) => ToggleEnabled())
+    A_TrayMenu.Add()
+    A_TrayMenu.Add(T("خروج", "Exit"), (*) => ExitApp())
+    A_TrayMenu.Default := T("فتح الإعدادات", "Open settings")
 }
 
 JsonStr(v) {
@@ -171,6 +186,8 @@ KeyLabel(k) {
         "LShift", "شفت", "RShift", "شفت يمين", "LControl", "كنترول", "RControl", "كنترول يمين",
         "LAlt", "ألت", "RAlt", "ألت يمين", "Tab", "تاب", "CapsLock", "كابس", "Enter", "إنتر"
     )
+    if (Cfg["Lang"] = "en")
+        return RegExReplace(StrUpper(SubStr(k, 1, 1)) SubStr(k, 2), "^(LButton|RButton|MButton)$", "$1")
     return names.Has(k) ? names[k] : StrUpper(k)
 }
 
@@ -189,7 +206,7 @@ ToggleEnabled() {
 }
 
 UpdateStatus() {
-    A_IconTip := "كاتم السنايبر: " (Enabled ? "شغّال" : "موقّف")
+    A_IconTip := T("كاتم السنايبر: ", "Sniper Cancel: ") (Enabled ? T("شغّال", "ON") : T("موقّف", "OFF"))
     PushState()
 }
 
@@ -275,7 +292,7 @@ CaptureKey(key) {
         Save(key)
         try BindHotkeys()
         catch {
-            MsgBox "ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "كاتم السنايبر"
+            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use that key, try another one."), T("كاتم السنايبر", "Sniper Cancel")
             Cfg[key] := old, Save(key)
             BindHotkeys()
         }
