@@ -180,6 +180,8 @@ CloseWindow() {
     if WVC
         try WVC.Close()
     WVC := WV := 0
+    ; نرجّع الذاكرة اللي أخذتها الواجهة للويندوز
+    SetTimer(() => DllCall("SetProcessWorkingSetSize", "ptr", -1, "ptr", -1, "ptr", -1), -1500)
 }
 
 OnWebMessage(sender, args) {
