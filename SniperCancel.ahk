@@ -6,10 +6,13 @@ InstallKeybdHook()
 InstallMouseHook()
 SetWorkingDir A_ScriptDir
 ProcessSetPriority "High"
+if !A_IsCompiled && FileExist(A_ScriptDir "\icon.ico")
+    TraySetIcon A_ScriptDir "\icon.ico"
 
 ;@Ahk2Exe-SetName كاتم السنايبر
 ;@Ahk2Exe-SetDescription كاتم السنايبر
 ;@Ahk2Exe-SetVersion 2.0.0
+;@Ahk2Exe-SetMainIcon icon.ico
 
 ; ---------- الإعدادات ----------
 global SettingsDir := A_AppData "\SniperCancel"
@@ -417,7 +420,7 @@ CaptureKey(obj) {
     while (found = "" && A_TickCount < deadline) {
         Loop 254 {
             vk := A_Index
-            if (vk = 0x10 || vk = 0x11 || vk = 0x12)  ; نتجاهل النسخ العامة من شفت وكنترول وألت
+            if (vk = 0x10 || vk = 0x11 || vk = 0x12 || (vk >= 0x9C && vk <= 0x9F))  ; نتجاهل شفت وكنترول وألت العامة وعجلة الماوس
                 continue
             if GetKeyState(Format("vk{:02X}", vk), "P") {
                 name := GetKeyName(Format("vk{:02X}", vk))

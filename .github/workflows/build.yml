@@ -60,17 +60,30 @@ jobs:
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          function Shot($name) {
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            $bmp.Save("$PWD/shots/$name.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          }
+          New-Item -ItemType Directory -Force shots | Out-Null
           $p = Start-Process dist/SniperCancel.exe -PassThru
           Start-Sleep 5
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          $g = [System.Drawing.Graphics]::FromImage($bmp)
-          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          $bmp.Save("$PWD/shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          Shot off
+          Set-Content -Encoding utf8 press.ahk 'SendLevel 1', 'Send "{F8}"'
+          & tools/ahk/AutoHotkey64.exe press.ahk
+          Start-Sleep 2
+          Shot on
           Stop-Process -Id $p.Id -Force
-          Write-Host "SHOT_BEGIN"
-          [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD/shot.png")) -split '(.{4000})' | Where-Object { $_ } | ForEach-Object { Write-Host "SHOT:$_" }
-          Write-Host "SHOT_END"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          $src = "${{ github.ref_name }}"
+          git checkout --orphan ci-screenshots
+          git rm -rfq --cached .
+          git add -f shots/*.png
+          git commit -qm "screenshots from $src"
+          git push -f origin ci-screenshots
 
       - name: Publish release
         if: github.ref == 'refs/heads/main'
