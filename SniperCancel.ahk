@@ -14,10 +14,13 @@ if (A_LastError = 183) {
 }
 SetWorkingDir A_ScriptDir
 ProcessSetPriority "High"
+if !A_IsCompiled && FileExist(A_ScriptDir "\icon.ico")
+    TraySetIcon A_ScriptDir "\icon.ico"
 
 ;@Ahk2Exe-SetName كاتم السنايبر
 ;@Ahk2Exe-SetDescription كاتم السنايبر
 ;@Ahk2Exe-SetVersion 1.0.0
+;@Ahk2Exe-SetMainIcon icon.ico
 
 ; رقم الإصدار: البناء التلقائي يحط الرقم الصحيح هنا
 global AppVersion := "1.0.0"
@@ -85,104 +88,31 @@ global UpdateAvailable := false, LatestVersion := ""
 InitProfiles()
 
 ; ---------- الواجهة ----------
-global G := Gui("+MinimizeBox", "كاتم السنايبر")
-G.SetFont("s10", "Segoe UI")
-global Y := 12
+; الواجهة صفحة ويب (ui.html) تنفتح بمحرك الويب اللي جاي مع ويندوز
+; تنبني بس لما تفتح النافذة، وأول ما تسكّرها تنمسح كاملة من الذاكرة
+#Include lib\WebView2\WebView2.ahk
+
+if A_IsCompiled {
+    ; لو الملف مستخدم (نسخة ثانية فاتحة) نكمل عادي
+    try {
+        FileInstall "ui.html", SettingsDir "\ui.html", 1
+    }
+    try {
+        FileInstall "lib\WebView2\64bit\WebView2Loader.dll", SettingsDir "\WebView2Loader.dll", 1
+    }
+}
+global UiFile := A_IsCompiled ? SettingsDir "\ui.html" : A_ScriptDir "\ui.html"
+global LoaderDll := A_IsCompiled ? SettingsDir "\WebView2Loader.dll" : A_ScriptDir "\lib\WebView2\64bit\WebView2Loader.dll"
+global WVC := 0, WV := 0, WebMsgSub := 0
+global CapturingKey := "", Updating := false
+; بقايا الواجهة القديمة: فاضية، عشان الدوال اللي تتأكد منها تشتغل بدون تغيير
 global KeyEdits := Map(), KeyBtns := Map(), MsEdits := Map(), FlagBoxes := Map()
 
-Section(title) {
-    global Y
-    G.AddText("x20 y" Y " w400 Center", title)
-    Y += 28
-}
-
-AddKeyRow(label, key) {
-    global Y
-    G.AddText("x250 y" Y " w170 Right", label)
-    edt := G.AddEdit("x120 y" (Y - 3) " w120 ReadOnly Center", Cfg[key])
-    btn := G.AddButton("x20 y" (Y - 4) " w90", "تعيين")
-    btn.OnEvent("Click", (*) => CaptureKey(key))
-    KeyEdits[key] := edt
-    KeyBtns[key] := btn
-    Y += 32
-    return edt
-}
-
-AddMsRow(label, key) {
-    global Y
-    lim := Limits[key]
-    G.AddText("x250 y" Y " w170 Right", label)
-    edt := G.AddEdit("x120 y" (Y - 3) " w120 Number Center", Cfg[key])
-    edt.OnEvent("Change", (ctl, *) => SaveIfValid(key, ctl.Value))
-    edt.OnEvent("LoseFocus", (ctl, *) => SetSetting(key, ctl.Value))
-    G.AddText("x20 y" Y " w90 Right cGray", lim[1] "–" lim[2] " مث")
-    MsEdits[key] := edt
-    Y += 32
-}
-
-AddFlag(label, key) {
-    global Y
-    box := G.AddCheckbox("x20 y" Y " w400 Right", label)
-    box.Value := Cfg[key]
-    box.OnEvent("Click", (ctl, *) => SetSetting(key, ctl.Value))
-    FlagBoxes[key] := box
-    Y += 26
-}
-
-Section("الأزرار")
-AddKeyRow("زر الطلقة:", "Trigger")
-AddKeyRow("زر التوماهوك:", "Tomahawk")
-AddFlag("تبديل بزرين منفصلين (زر للمسدس وزر للرئيسي)", "SwapMode")
-AddKeyRow("زر تبديل السلاح:", "Swap")
-AddKeyRow("زر المسدس:", "PistolKey")
-AddKeyRow("زر السلاح الرئيسي:", "PrimaryKey")
-AddKeyRow("زر التشغيل والإيقاف:", "Toggle")
-AddKeyRow("زر تغيير الملف:", "ProfileKey")
-
-Y += 6
-Section("ملف التوقيت")
-global ProfileBox := G.AddDropDownList("x120 y" (Y - 3) " w300", [])
-ProfileBox.OnEvent("Change", (ctl, *) => ProfileLoad(ctl.Text))
-G.AddButton("x20 y" (Y - 4) " w90", "حذف").OnEvent("Click", (*) => AskDeleteProfile())
-Y += 34
-G.AddButton("x120 y" (Y - 4) " w300", "حفظ التوقيت الحالي كملف جديد").OnEvent("Click", (*) => AskNewProfile())
-Y += 36
-AddMsRow("انتظار بعد الطلقة:", "DelayShot")
-AddMsRow("مدة مسك التوماهوك:", "HoldTomahawk")
-AddMsRow("انتظار قبل التبديل:", "DelaySwap")
-AddMsRow("بين التبديل والرجوع:", "SwapGap")
-
-Y += 6
-Section("اللعبة")
-AddFlag("يشتغل بس وانت داخل اللعبة", "GameOnly")
-G.AddText("x250 y" Y " w170 Right", "اسم برنامج اللعبة:")
-global GameEdit := G.AddEdit("x120 y" (Y - 3) " w120 Center", Cfg["GameExe"])
-GameEdit.OnEvent("LoseFocus", (ctl, *) => SetSetting("GameExe", ctl.Value))
-G.AddButton("x20 y" (Y - 4) " w90", "تحديد").OnEvent("Click", (*) => DetectGame())
-Y += 34
-G.AddText("x20 y" Y " w400 Right cGray", "اضغط تحديد ثم افتح اللعبة خلال ٥ ثواني")
-Y += 26
-
-Y += 6
-Section("خيارات")
-AddFlag("تعرّف تلقائي: يشتغل بس وانت ماسك السلاح الرئيسي", "Track")
-AddFlag("مؤشر صغير على الشاشة", "Indicator")
-AddFlag("تنبيهني إذا نزل إصدار جديد", "CheckUpdates")
-
-Y += 8
-global StatusText := G.AddText("x20 y" Y " w400 Center", "")
-Y += 28
-global ToggleBtn := G.AddButton("x230 y" Y " w190 h32", "تشغيل")
-ToggleBtn.OnEvent("Click", (*) => ToggleEnabled())
-G.AddButton("x20 y" Y " w190 h32", "تجربة").OnEvent("Click", (*) => RunTest())
-Y += 40
-global UpdateBtn := G.AddButton("x20 y" Y " w400 h32 Hidden", "")
-UpdateBtn.OnEvent("Click", (*) => DoUpdate())
-Y += 40
-G.AddText("x20 y" Y " w400 Center cGray", "إذا سكّرت النافذة يكمل البرنامج شغله من أيقونة جنب الساعة")
-global WinH := Y + 30
-
-G.OnEvent("Close", (*) => (G.Hide(), true))
+global G := Gui("-MaximizeBox", AppTitle())
+G.BackColor := "07080A"
+G.MarginX := 0, G.MarginY := 0
+G.OnEvent("Close", (*) => (CloseWindow(), true))
+G.OnEvent("Size", (*) => (WVC && WVC.Fill()))
 OnMessage(ShowMsg, (*) => ShowWindow())
 
 ; ---------- المؤشر على الشاشة ----------
@@ -194,18 +124,9 @@ global OsdText := Osd.AddText("w220 Right", "")
 WinSetTransColor "010101", Osd
 
 ; ---------- أيقونة جنب الساعة ----------
-A_TrayMenu.Delete()
-A_TrayMenu.Add(T("فتح الإعدادات", "Open settings"), (*) => ShowWindow())
-A_TrayMenu.Add(T("تشغيل / إيقاف", "On / Off"), (*) => ToggleEnabled())
-A_TrayMenu.Add(T("تجربة الحركة", "Test the move"), (*) => RunTest())
-A_TrayMenu.Add()
-A_TrayMenu.Add(T("خروج", "Exit"), (*) => ExitApp())
-A_TrayMenu.Default := T("فتح الإعدادات", "Open settings")
-A_IconTip := T("كاتم السنايبر", "Sniper Cancel")
+BuildTrayMenu()
 
 BindHotkeys()
-RefreshProfiles()
-RefreshSwapRows()
 UpdateStatus()
 ShowWindow()
 if Cfg["CheckUpdates"]
@@ -214,14 +135,148 @@ return
 
 ; نافذة وحدة بس: نفس النافذة تنعرض وتتقدم بدل ما تنفتح ثانية
 ShowWindow(*) {
+    global WVC, WV, WebMsgSub
     static first := true
     if first {
         first := false
-        G.Show("w440 h" WinH)
+        try DllCall("dwmapi\DwmSetWindowAttribute", "ptr", G.Hwnd, "int", 20, "int*", 1, "int", 4)
+        try DllCall("dwmapi\DwmSetWindowAttribute", "ptr", G.Hwnd, "int", 35, "int*", 0x0A0807, "int", 4)
+        try DllCall("dwmapi\DwmSetWindowAttribute", "ptr", G.Hwnd, "int", 34, "int*", 0x2E2A2A, "int", 4)
+        ; الطول يناسب الشاشة، والباقي ينزل بالسحب
+        MonitorGetWorkArea(, , &top, , &bottom)
+        h := Min(860, Floor((bottom - top) / (A_ScreenDPI / 96)) - 60)
+        G.Show("w540 h" h)
     } else
         G.Show()
     WinActivate G
+
+    if WVC
+        return
+    try {
+        WVC := WebView2.CreateControllerAsync(G.Hwnd, 0, SettingsDir "\webview", "", LoaderDll).await2()
+        try WVC.DefaultBackgroundColor := 0x0A0807FF
+        WVC.Fill()
+        WV := WVC.CoreWebView2
+        st := WV.Settings
+        try st.AreDevToolsEnabled := false
+        try st.AreDefaultContextMenusEnabled := false
+        try st.IsZoomControlEnabled := false
+        try st.IsStatusBarEnabled := false
+        WebMsgSub := WV.WebMessageReceived(OnWebMessage)
+        WV.Navigate("file:///" StrReplace(UiFile, "\", "/"))
+    } catch as e {
+        WVC := WV := WebMsgSub := 0
+        G.Hide()
+        if MsgBox(T("ما قدرت أفتح الواجهة. غالبًا جهازك ناقصه مكوّن (WebView2) من مايكروسوفت.`n`nتبي أفتح صفحة تحميله؟ البرنامج نفسه شغّال وتقدر تستخدم زر التشغيل عادي.", "Could not open the settings window. Your PC is probably missing Microsoft WebView2.`n`nOpen its download page? The app itself still works with the on/off hotkey.") "`n`n(" e.Message ")", AppTitle(), "YesNo Icon! " RtlFlag()) = "Yes"
+            Run "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+    }
 }
+
+; تسكير النافذة يمسح الواجهة كاملة (مو بس يخفيها) عشان ما تاخذ ذاكرة ولا معالج
+CloseWindow() {
+    global WVC, WV, WebMsgSub
+    G.Hide()
+    WebMsgSub := 0
+    if WVC
+        try WVC.Close()
+    WVC := WV := 0
+    ; نرجّع الذاكرة اللي أخذتها الواجهة للويندوز
+    SetTimer(() => DllCall("SetProcessWorkingSetSize", "ptr", -1, "ptr", -1, "ptr", -1), -1500)
+}
+
+OnWebMessage(sender, args) {
+    p := StrSplit(args.TryGetWebMessageAsString(), "|", , 3)
+    a1 := p.Length >= 2 ? p[2] : "", a2 := p.Length >= 3 ? p[3] : ""
+    switch p[1] {
+        case "ready":   PushState()
+        case "toggle":  SetTimer(ToggleEnabled, -1)
+        case "test":    SetTimer(RunTest, -1)
+        case "detect":  SetTimer(DetectGame, -1)
+        case "update":  SetTimer(DoUpdate, -1)
+        case "capture":
+            if HasValue(KeyFields, a1)
+                SetTimer(CaptureKey.Bind(a1), -1)
+        case "set":
+            if (a1 = "Profile")
+                return
+            if !SetSetting(a1, a2)
+                PushState()
+            else if (a1 = "Lang") {
+                G.Title := AppTitle()
+                BuildTrayMenu()
+                PushState()
+            }
+        case "profile":
+            switch a1 {
+                case "load": ProfileLoad(a2)
+                case "new":
+                    if !ProfileSave(a2)
+                        MsgBox T("الاسم ما ينفع، جرّب اسم ثاني.", "Invalid name, try another."), AppTitle(), RtlFlag()
+                case "del":  ProfileDelete(Cfg["Profile"])
+            }
+            PushState()
+    }
+}
+
+JsonStr(v) {
+    v := StrReplace(v, "\", "\\")
+    v := StrReplace(v, '"', '\"')
+    v := StrReplace(v, "`n", "\n")
+    v := StrReplace(v, "`r", "")
+    return '"' v '"'
+}
+
+; يرسل كل الحالة للواجهة (لو كانت مفتوحة)
+PushState() {
+    if !WV
+        return
+    c := "", l := "", pr := "", lm := ""
+    for k, v in Cfg
+        c .= (c = "" ? "" : ",") JsonStr(k) ":" (IsInteger(v) ? Integer(v) : JsonStr(v))
+    for k in KeyFields
+        l .= (l = "" ? "" : ",") JsonStr(k) ":" JsonStr(KeyLabel(Cfg[k]))
+    for n in ProfileList()
+        pr .= (pr = "" ? "" : ",") JsonStr(n)
+    for k, v in Limits
+        lm .= (lm = "" ? "" : ",") JsonStr(k) ":[" v[1] "," v[2] "]"
+    json := '{"cfg":{' c '},"labels":{' l '},"profiles":[' pr '],"limits":{' lm '}'
+        . ',"enabled":' (Enabled ? "true" : "false")
+        . ',"capturing":' JsonStr(CapturingKey)
+        . ',"version":' JsonStr(AppVersion)
+        . ',"update":{"available":' (UpdateAvailable ? "true" : "false") ',"latest":' JsonStr(LatestVersion) ',"busy":' (Updating ? "true" : "false") '}}'
+    try WV.PostWebMessageAsJson(json)
+}
+
+KeyLabel(k) {
+    static names := Map(
+        "LButton", "كليك يسار", "RButton", "كليك يمين", "MButton", "زر العجلة",
+        "XButton1", "زر جانبي ١", "XButton2", "زر جانبي ٢", "Space", "مسافة",
+        "LShift", "شفت", "RShift", "شفت يمين", "LControl", "كنترول", "RControl", "كنترول يمين",
+        "LAlt", "ألت", "RAlt", "ألت يمين", "Tab", "تاب", "CapsLock", "كابس", "Enter", "إنتر"
+    )
+    static en := Map("LButton", "Left click", "RButton", "Right click", "MButton", "Wheel click",
+        "XButton1", "Side 1", "XButton2", "Side 2")
+    if (k = "")
+        return "—"
+    if (Cfg["Lang"] = "en")
+        return en.Has(k) ? en[k] : StrUpper(SubStr(k, 1, 1)) SubStr(k, 2)
+    return names.Has(k) ? names[k] : StrUpper(k)
+}
+
+BuildTrayMenu() {
+    A_TrayMenu.Delete()
+    if UpdateAvailable
+        A_TrayMenu.Add(T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion, (*) => DoUpdate())
+    A_TrayMenu.Add(T("فتح الإعدادات", "Open settings"), (*) => ShowWindow())
+    A_TrayMenu.Add(T("تشغيل / إيقاف", "On / Off"), (*) => ToggleEnabled())
+    A_TrayMenu.Add(T("تجربة الحركة", "Test the move"), (*) => RunTest())
+    A_TrayMenu.Add()
+    A_TrayMenu.Add(T("خروج", "Exit"), (*) => ExitApp())
+    A_TrayMenu.Default := T("فتح الإعدادات", "Open settings")
+}
+
+; رسائل ويندوز من اليمين لليسار لما تكون اللغة عربي
+RtlFlag() => Cfg["Lang"] = "en" ? "" : "0x180000"
 
 ; النص باللغة المختارة
 T(ar, en) => (Cfg["Lang"] = "en") ? en : ar
@@ -323,11 +378,7 @@ HasValue(arr, v) {
     return false
 }
 
-RefreshSwapRows() {
-    two := Cfg["SwapMode"]
-    for k, on in Map("Swap", !two, "PistolKey", two, "PrimaryKey", two)
-        KeyEdits[k].Enabled := on, KeyBtns[k].Enabled := on
-}
+RefreshSwapRows() => PushState()
 
 ; ---------- ملفات التوقيت ----------
 ProfileSection(name) => "Profile " name
@@ -401,33 +452,7 @@ ProfileNext(*) {
     OsdFlash(T("الملف: ", "Profile: ") Cfg["Profile"])
 }
 
-RefreshProfiles() {
-    list := ProfileList()
-    ProfileBox.Delete()
-    ProfileBox.Add(list)
-    for idx, n in list
-        if (n = Cfg["Profile"])
-            ProfileBox.Choose(idx)
-    for k in TimingKeys
-        MsEdits[k].Value := Cfg[k]
-}
-
-AskNewProfile() {
-    r := InputBox(T("اكتب اسم الملف الجديد (مثلاً اسم السنايبر):", "New profile name (e.g. the sniper name):"), AppTitle(), "w300 h130")
-    if (r.Result != "OK" || Trim(r.Value) = "")
-        return
-    if !ProfileSave(r.Value)
-        return MsgBox(T("الاسم ما ينفع، جرّب اسم ثاني.", "Invalid name, try another."), AppTitle())
-    RefreshProfiles()
-}
-
-AskDeleteProfile() {
-    name := Cfg["Profile"]
-    if (ProfileList().Length <= 1)
-        return MsgBox(T("لازم يبقى ملف واحد على الأقل.", "At least one profile must remain."), AppTitle())
-    if (MsgBox(T("تحذف الملف «", "Delete profile «") name T("»؟", "»?"), AppTitle(), "YesNo") = "Yes")
-        ProfileDelete(name)
-}
+RefreshProfiles() => PushState()
 
 ; ---------- اللعبة ----------
 GameActive(*) {
@@ -451,12 +476,12 @@ DetectGame() {
     catch
         exe := ""
     if (exe = "" || exe = "explorer.exe" || InStr(A_ScriptFullPath, exe)) {
-        MsgBox T("ما لقيت اللعبة، تأكد إنك فتحتها قبل ما يخلص العد.", "Game not found. Open it before the countdown ends."), AppTitle()
+        MsgBox T("ما لقيت اللعبة، تأكد إنك فتحتها قبل ما يخلص العد.", "Game not found. Open it before the countdown ends."), AppTitle(), RtlFlag()
         return
     }
     SetSetting("GameExe", exe)
-    GameEdit.Value := exe
-    MsgBox T("تم، البرنامج بيشتغل بس داخل: ", "Done. It will only work inside: ") exe, AppTitle()
+    PushState()
+    MsgBox T("تم، البرنامج بيشتغل بس داخل: ", "Done. It will only work inside: ") exe, AppTitle(), RtlFlag()
 }
 
 ; ---------- التشغيل ----------
@@ -472,18 +497,9 @@ ToggleEnabled(*) {
 }
 
 UpdateStatus() {
-    if Enabled {
-        StatusText.Text := "شغّال ✓"
-        StatusText.SetFont("cGreen Bold")
-        ToggleBtn.Text := "إيقاف"
-        A_IconTip := T("كاتم السنايبر: شغّال", "Sniper Cancel: on")
-    } else {
-        StatusText.Text := "موقّف"
-        StatusText.SetFont("cRed Bold")
-        ToggleBtn.Text := "تشغيل"
-        A_IconTip := T("كاتم السنايبر: موقّف", "Sniper Cancel: off")
-    }
+    A_IconTip := Enabled ? T("كاتم السنايبر: شغّال", "Sniper Cancel: on") : T("كاتم السنايبر: موقّف", "Sniper Cancel: off")
     OsdUpdate()
+    PushState()
 }
 
 BindHotkeys() {
@@ -573,6 +589,8 @@ OnShot(*) {
     global Busy
     if (!Enabled || Busy || Capturing)
         return
+    if WinActive("ahk_id " G.Hwnd)   ; الضغط داخل نافذة الإعدادات ما يحسب طلقة
+        return
     if (Cfg["Track"] && !OnPrimary)
         return
     Busy := true
@@ -643,9 +661,8 @@ CheckUpdate() {
         return
     UpdateAvailable := true
     LatestVersion := m[1]
-    UpdateBtn.Text := T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion
-    UpdateBtn.Visible := true
-    try A_TrayMenu.Insert("1&", T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion, (*) => DoUpdate())
+    BuildTrayMenu()
+    PushState()
     TrayTip T("فيه إصدار جديد ", "New version ") LatestVersion T(". اضغط تحديث من البرنامج.", " is out. Press Update in the app."), AppTitle()
 }
 
@@ -655,8 +672,9 @@ DoUpdate(*) {
         Run DownloadUrl
         return
     }
-    UpdateBtn.Enabled := false
-    UpdateBtn.Text := T("جاري التحميل...", "Downloading...")
+    global Updating
+    Updating := true
+    PushState()
     newExe := A_Temp "\SniperCancel_new.exe"
     try {
         if FileExist(newExe)
@@ -665,9 +683,9 @@ DoUpdate(*) {
         if (FileGetSize(newExe) < 100000)
             throw Error("small")
     } catch {
-        UpdateBtn.Enabled := true
-        UpdateBtn.Text := T("تحديث للإصدار الجديد ", "Update to version ") LatestVersion
-        MsgBox T("ما قدرت أحمّل التحديث، تأكد من النت وجرّب مرة ثانية.", "Could not download the update. Check your internet and try again."), AppTitle()
+        Updating := false
+        PushState()
+        MsgBox T("ما قدرت أحمّل التحديث، تأكد من النت وجرّب مرة ثانية.", "Could not download the update. Check your internet and try again."), AppTitle(), RtlFlag()
         return
     }
     ; ملف صغير ينتظر البرنامج يقفل، يبدل الملف، ويشغّل الجديد
@@ -692,14 +710,15 @@ CaptureKey(key) {
     global Capturing
     if Capturing
         return
+    global CapturingKey
     Capturing := true
-    edt := KeyEdits[key]
-    old := Cfg[key]
-    edt.Value := "اضغط الزر..."
+    CapturingKey := key
+    PushState()
     ; المراقبة تشتغل بس وقت التعيين وبعدها تنطفي
     InstallKeybdHook true
     InstallMouseHook true
-    Sleep 350  ; عشان ما ياخذ ضغطة الماوس اللي ضغطت فيها "تعيين"
+    KeyWait "LButton"   ; عشان ما ياخذ الضغطة اللي ضغطت فيها على الزر
+    Sleep 120
 
     found := ""
     deadline := A_TickCount + 8000
@@ -721,15 +740,15 @@ CaptureKey(key) {
         Sleep 10
     }
 
-    edt.Value := old
     if (found != "" && found != "Escape") {
         if !SetSetting(key, found)
-            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use this key, try another one."), AppTitle()
+            MsgBox T("ما قدرت أستخدم هذا الزر، جرّب زر ثاني.", "Can't use this key, try another one."), AppTitle(), RtlFlag()
     }
     if (found != "")
         KeyWait found
     InstallKeybdHook false
     InstallMouseHook false
     Capturing := false
+    CapturingKey := ""
     UpdateStatus()
 }
