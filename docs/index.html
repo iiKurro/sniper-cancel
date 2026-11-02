@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Sniper Cancel</title>
+<meta name="description" content="A tiny Windows tool that does the sniper quick-swap for you: after every shot it presses tomahawk, swaps to your pistol and straight back. Keyboard only, no hacks.">
+<meta property="og:title" content="Sniper Cancel">
+<meta property="og:description" content="Sniper quick-swap after every shot. Keyboard only, no hacks. Free download for Windows.">
+<meta property="og:image" content="assets/app-on.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff7a1a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8' stroke-dasharray='10 2.6'/%3E%3Cpath d='M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5'/%3E%3Ccircle cx='12' cy='12' r='1.6' fill='%23ff7a1a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080a; --panel:rgba(22,24,29,.72); --panel2:#111318; --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --txt:#f4f4f5; --muted:#9a9aa3; --dim:#6b6d76;
+  --acc:#ff7a1a; --acc2:#ffb020; --accGlow:rgba(255,122,26,.45);
+  --mono:'JetBrains Mono','Cascadia Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img{max-width:100%;height:auto;display:block}
+svg{flex:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* background: dot grid + orange glow, same as the app */
+.bgfx{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bgfx:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px;mask-image:linear-gradient(#000,transparent 60%);-webkit-mask-image:linear-gradient(#000,transparent 60%)}
+.bgfx:after{content:"";position:absolute;top:-260px;left:50%;width:min(1100px,140vw);height:620px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,122,26,.20),transparent)}
+main,header,footer{position:relative;z-index:1}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(7,8,10,.72);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:-.2px}
+.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,#1d1f25,#0e0f12);border:1px solid var(--line2);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.logo svg{width:22px;height:22px}
+.logo .ring{animation:spin 6s linear infinite;transform-origin:50% 50%}
+.nav nav{flex:1;display:flex;justify-content:center;gap:4px}
+.nav nav a{font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:99px;transition:.2s}
+.nav nav a:hover{color:var(--txt);background:rgba(255,255,255,.04)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 14px/1 inherit;font-family:inherit;padding:12px 20px;border-radius:12px;text-decoration:none;transition:.15s;white-space:nowrap;cursor:pointer;border:0}
+.btn svg{width:17px;height:17px}
+.btn.pri{background:linear-gradient(180deg,#ff8a2a,#ff6a00);color:#1a0b00;box-shadow:0 0 24px rgba(255,122,26,.35),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.pri:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.sec{background:#1a1c22;border:1px solid var(--line2);color:var(--txt)}
+.btn.sec:hover{border-color:rgba(255,122,26,.45)}
+.btn.sec svg{stroke:var(--acc)}
+.btn.sm{padding:8px 14px;font-size:13px;border-radius:10px}
+.btn.lg{padding:15px 26px;font-size:15.5px;border-radius:14px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:72px 0 40px}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:99px;color:var(--acc);border:1px solid rgba(255,122,26,.35);background:rgba(255,122,26,.08)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc);position:relative}
+.pill i:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--acc);animation:ping 1.6s ease-out infinite}
+h1{font-size:clamp(40px,6vw,64px);line-height:1.04;font-weight:800;letter-spacing:-1.6px;margin:20px 0 18px}
+h1 em{font-style:normal;background:linear-gradient(90deg,#ff6a00,#ffb020);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:18px;color:var(--muted);max-width:540px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--dim)}
+.meta span{display:inline-flex;align-items:center;gap:6px}
+.meta svg{width:14px;height:14px;stroke:var(--acc)}
+.shot{position:relative;border-radius:22px;padding:1px;background:linear-gradient(160deg,rgba(255,122,26,.55),rgba(255,255,255,.06) 40%,rgba(255,255,255,.03));box-shadow:0 30px 80px #000c,0 0 80px rgba(255,122,26,.12)}
+.shot .in{border-radius:21px;overflow:hidden;background:#07080a;max-height:600px;position:relative}
+.shot .in:after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,#07080a)}
+.shot img{width:100%}
+
+.mini{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 7px;border-radius:6px;font:800 12px var(--mono);background:#1c1e24;border:1px solid #33353d;border-bottom-width:2px;color:var(--txt);margin:0 2px;vertical-align:1px}
+
+/* sections */
+section{padding:72px 0}
+.sh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px}
+.sh svg{width:16px;height:16px;stroke:var(--acc)}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.12;letter-spacing:-.8px;font-weight:800;margin-bottom:14px}
+.sub{color:var(--muted);font-size:16.5px;max-width:640px}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+
+/* video */
+.video{margin-top:30px;aspect-ratio:16/9;overflow:hidden;display:grid;place-items:center}
+.video video,.video iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.vph{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px}
+.vph .play{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#ff9a3d,#ff6a00);box-shadow:0 0 0 8px rgba(255,122,26,.12),0 0 40px var(--accGlow)}
+.vph .play svg{width:30px;height:30px;fill:#1a0b00;margin-left:4px}
+.vph b{font-size:18px}
+.vph span{color:var(--muted);font-size:14px}
+.video.has .vph{display:none}
+
+/* sequence (same as the app timeline) */
+.seq{margin-top:34px;padding:28px 26px 22px}
+.flow{display:flex;align-items:center}
+.node{display:flex;flex-direction:column;align-items:center;gap:10px;width:96px;flex:none;text-align:center}
+.node .ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:#16181d;border:1px solid var(--line2);transition:.3s}
+.node .ic svg{width:24px;height:24px;stroke:var(--txt)}
+.node>div{display:flex;flex-direction:column;gap:3px}
+.node b{font-size:14px}
+.node small{font-size:12px;color:var(--dim);line-height:1.35}
+.node.lit .ic{background:linear-gradient(145deg,rgba(255,122,26,.3),rgba(255,122,26,.06));border-color:rgba(255,122,26,.6);box-shadow:0 0 24px rgba(255,122,26,.3)}
+.node.lit .ic svg{stroke:var(--acc)}
+.edge{flex:1;position:relative;height:56px;display:flex;align-items:center;justify-content:center;align-self:flex-start}
+.edge:before{content:"";position:absolute;inset:50% 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--acc),transparent);background-size:200% 100%;animation:flow 1.4s linear infinite;opacity:.9}
+.edge em{position:relative;font:800 12px var(--mono);font-style:normal;background:#0d0e12;border:1px solid var(--line2);color:var(--txt);padding:3px 9px;border-radius:99px;white-space:nowrap}
+.edge em u{text-decoration:none;color:var(--dim);font-weight:600;margin-left:3px}
+.seqnote{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+.seqnote svg{width:16px;height:16px;stroke:var(--acc);margin-top:3px}
+
+/* features */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:34px}
+.feat{padding:22px}
+.feat .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,122,26,.08);border:1px solid rgba(255,122,26,.25);margin-bottom:14px}
+.feat .ic svg{width:20px;height:20px;stroke:var(--acc)}
+.feat b{display:block;font-size:15.5px;margin-bottom:6px}
+.feat p{font-size:14px;color:var(--muted)}
+.feat:hover{border-color:rgba(255,122,26,.3)}
+
+/* setup steps */
+.setup{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;margin-top:34px}
+.steps{display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.step{display:flex;gap:16px;padding:18px 20px}
+.step:before{counter-increment:s;content:counter(s);flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font:800 14px var(--mono);color:#1a0b00;background:linear-gradient(180deg,#ff8a2a,#ff6a00);box-shadow:0 0 16px rgba(255,122,26,.3)}
+.step b{display:block;font-size:15px;margin-bottom:3px}
+.step p{font-size:14px;color:var(--muted)}
+.keys{padding:8px 0}
+.krow{display:flex;align-items:center;gap:14px;padding:13px 20px;border-top:1px solid var(--line)}
+.krow:first-child{border-top:0}
+.krow .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.krow .ic svg{width:17px;height:17px;stroke:var(--muted)}
+.krow .tx{flex:1;min-width:0}
+.krow .tx b{display:block;font-size:14px}
+.krow .tx span{font-size:12.5px;color:var(--dim)}
+.cap{min-width:54px;height:40px;padding:0 12px;border-radius:9px;display:grid;place-items:center;font:800 14px var(--mono);color:var(--txt);background:linear-gradient(180deg,#2a2c33,#1a1b20);border:1px solid #3a3c45;box-shadow:0 3px 0 #0b0b0e,0 4px 10px #0007,inset 0 1px 0 rgba(255,255,255,.1);white-space:nowrap}
+.cap.txt{font-family:inherit;font-size:13px}
+.caps{display:flex;gap:8px}
+
+/* timing table */
+.timing{margin-top:34px;overflow:hidden}
+.trow{display:grid;grid-template-columns:200px 1fr 120px;gap:20px;align-items:center;padding:16px 22px;border-top:1px solid var(--line)}
+.trow:first-child{border-top:0}
+.trow b{font-size:14.5px}
+.trow p{font-size:13.5px;color:var(--muted)}
+.bar{grid-column:1/-1;height:0}
+.val{display:flex;align-items:center;justify-content:center;gap:4px;height:34px;border-radius:9px;background:#0d0e12;border:1px solid var(--line2);font:800 14px var(--mono)}
+.val u{text-decoration:none;font:600 11px inherit;font-family:inherit;color:var(--dim)}
+.tips{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.tip{padding:18px 20px;display:flex;gap:12px;font-size:14px;color:var(--muted)}
+.tip svg{width:18px;height:18px;stroke:var(--acc);margin-top:2px}
+.tip b{color:var(--txt)}
+
+/* shots gallery */
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px}
+.gal figure{margin:0}
+.gal .shot .in{max-height:520px}
+.gal figcaption{text-align:center;font-size:13px;color:var(--dim);margin-top:12px}
+
+/* faq */
+.faq{margin-top:34px;display:flex;flex-direction:column;gap:10px}
+details{padding:0 22px}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:18px 0;font-weight:700;font-size:15px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"";margin-left:auto;width:8px;height:8px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);transition:.2s;flex:none}
+details[open] summary:after{transform:rotate(-135deg)}
+details p{padding:0 0 18px;color:var(--muted);font-size:14.5px}
+details[open]{border-color:rgba(255,122,26,.3)}
+
+/* download band */
+.band{text-align:center;padding:56px 24px;overflow:hidden}
+.band:before{content:"";position:absolute;inset:-1px;border-radius:18px;padding:1px;background:conic-gradient(from var(--a,0deg),transparent 0 70%,var(--acc) 85%,var(--acc2) 92%,transparent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rot 4s linear infinite;pointer-events:none}
+.band:after{content:"";position:absolute;top:-200px;left:50%;width:600px;height:400px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,122,26,.18),transparent);pointer-events:none}
+.band>*{position:relative;z-index:1}
+.band .pw{width:76px;height:76px;margin:0 auto 22px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#ff9a3d,#ff6a00);border:1px solid #ffb46b;box-shadow:0 0 0 7px rgba(255,122,26,.12),0 0 40px var(--accGlow),inset 0 2px 0 rgba(255,255,255,.35)}
+.band .pw svg{width:30px;height:30px;stroke:#1a0b00}
+.band .sub{margin:0 auto 28px}
+.warn{margin-top:22px;font-size:12.5px;color:var(--dim);max-width:620px;margin-left:auto;margin-right:auto}
+
+footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:13px;color:var(--dim)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--acc)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+@keyframes flow{from{background-position:200% 0}to{background-position:0 0}}
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes rot{to{--a:360deg}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:40px;padding-top:48px}
+  .grid3{grid-template-columns:1fr 1fr}
+  .setup,.gal,.tips{grid-template-columns:1fr}
+  .nav nav{display:none}
+  .nav .wrap{justify-content:space-between}
+}
+@media (max-width:640px){
+  section{padding:52px 0}
+  .wrap{padding:0 16px}
+  .grid3{grid-template-columns:1fr}
+  .flow{flex-direction:column;align-items:stretch;gap:0}
+  .node{flex-direction:row;width:auto;text-align:left;gap:14px}
+  .edge{height:44px;width:56px;align-self:flex-start}
+  .edge:before{inset:0 auto 0 50%;width:2px;height:auto;background:linear-gradient(180deg,transparent,var(--acc),transparent);background-size:100% 200%}
+  .trow{grid-template-columns:1fr auto;gap:6px 14px}
+  .trow p{grid-column:1/-1;grid-row:2}
+  .seq{padding:22px 18px}
+  .krow{padding:12px 16px}
+  .cap{min-width:44px;height:36px;font-size:13px;padding:0 9px}
+}
+</style>
+</head>
+<body>
+<div class="bgfx"></div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#ff7a1a" stroke-width="2" stroke-linecap="round"><g class="ring"><circle cx="12" cy="12" r="8" stroke-dasharray="10 2.6"/></g><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/><circle cx="12" cy="12" r="1.6" fill="#ff7a1a"/></svg></span>
+      Sniper Cancel
+    </a>
+    <nav>
+      <a href="#video">Video</a>
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="#timing">Timing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn pri sm" href="https://github.com/iiKurro/sniper-cancel/releases/latest/download/SniperCancel.exe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="pill"><i></i>Free for Windows<span id="ver"></span></span>
+        <h1>Every sniper shot, <em>cancelled for you.</em></h1>
+        <p class="lead">Sniper Cancel is a tiny Windows app that does the quick-swap after every shot: it grabs the tomahawk, swaps to your pistol and straight back to the sniper. Only keyboard presses, no hacks, no memory reading.</p>
+        <div class="cta">
+          <a class="btn pri lg" href="https://github.com/iiKurro/sniper-cancel/releases/latest/download/SniperCancel.exe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download SniperCancel.exe
+          </a>
+          <a class="btn sec lg" href="#video">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5v15l12-7.5z"/></svg>Watch the video
+          </a>
+        </div>
+        <div class="meta">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>No install needed</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Near-zero CPU and RAM</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Open source</span>
+        </div>
+      </div>
+      <div class="shot"><div class="in"><img src="assets/app-on.png" alt="Sniper Cancel app window with the cancel turned on" width="1280" height="2564"></div></div>
+    </div>
+  </div>
+
+  <!-- VIDEO: drop the explainer at docs/assets/demo.mp4 and it shows up here by itself.
+       For a YouTube video instead, set data-youtube="VIDEO_ID" on #videoBox. -->
+  <section id="video">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="15" height="14" rx="3"/><path d="m17 10 5-3v10l-5-3"/></svg>Video guide</div>
+      <h2>See it in one minute</h2>
+      <p class="sub">A short walkthrough: setting your keys, tuning the timing and turning it on in game.</p>
+      <div class="card video" id="videoBox" data-src="assets/demo.mp4" data-youtube="">
+        <div class="vph">
+          <div class="play"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></div>
+          <b>Video coming soon</b>
+          <span>Until then, the steps below cover everything.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>How it works</div>
+      <h2>What happens after each shot</h2>
+      <p class="sub">You shoot like normal. The moment you fire, the app plays this short key sequence for you, faster and more consistent than your fingers.</p>
+      <div class="card seq">
+        <div class="flow">
+          <div class="node lit"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><div><b>Shot</b><small>You fire<br>(left click)</small></div></div>
+          <div class="edge"><em>40<u>ms</u></em></div>
+          <div class="node"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20 14 11M11 6c3-2 6-2 8 0-1 1-2 3-2 5l-3-3"/><path d="m14 8 3 3"/></svg></span><div><b>Tomahawk</b><small>Holds the<br>tomahawk key</small></div></div>
+          <div class="edge"><em>130<u>ms</u></em></div>
+          <div class="node"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg></span><div><b>Pistol</b><small>Swaps away,<br>cancels the throw</small></div></div>
+          <div class="edge"><em>50<u>ms</u></em></div>
+          <div class="node lit"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span><div><b>Primary</b><small>Straight back<br>to the sniper</small></div></div>
+        </div>
+        <div class="seqnote"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>The swap to the pistol happens while the tomahawk key is still held, which is what cancels the throw. Then it presses your primary key once more after 150 ms so you never get stuck on the pistol. The numbers are examples, you set your own.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z"/></svg>Features</div>
+      <h2>Small app, everything you need</h2>
+      <p class="sub">Built to stay out of your way. It sits in the tray, uses almost nothing, and only acts inside the game.</p>
+      <div class="grid3">
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></div><b>Keyboard only</b><p>It just presses the keys you choose. No injection, no memory reading, nothing touches the game files.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></div><b>One key on and off</b><p>Press <span class="mini">F8</span> in game to toggle. A high beep means on, a low beep means off.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><b>Extremely light</b><p>No background loops. Idle CPU is 0% and memory is about 4 MB. Key hooks only run while it is on.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 11v3M6.5 12.5h3M15 12h.01M17 13.5h.01"/></svg></div><b>Only inside the game</b><p>Outside the game it never touches your keys. Use Detect to pick the game window in five seconds.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div><b>Timing profiles</b><p>Save a profile per sniper and switch between them with <span class="mini">F9</span>.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg></div><b>Random timing</b><p>Give each delay a low and high value. Every shot picks a new value in between, so it never repeats exactly.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><b>On-screen indicator</b><p>A small badge in a corner of the screen shows if it is on and which profile is active.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div><b>One-click update</b><p>When a new version is out the app tells you, and one button downloads and restarts it.</p></div>
+        <div class="card feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9"/></svg></div><b>English and Arabic</b><p>Switch the app language with one tap. Your keys and settings are saved and come back every time.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Setup</div>
+      <h2>Ready in five steps</h2>
+      <p class="sub">Nothing to install. Download, run, set your keys once and they are remembered.</p>
+      <div class="setup">
+        <div class="steps">
+          <div class="card step"><div><b>Download and run</b><p>Get <span class="mini">SniperCancel.exe</span> and open it. If Windows SmartScreen shows a warning, click "More info" then "Run anyway".</p></div></div>
+          <div class="card step"><div><b>Set your keys</b><p>Click a key box, then press the key you want. Esc cancels. Use the same keys you use in the game settings.</p></div></div>
+          <div class="card step"><div><b>Pick the swap mode</b><p>"Two keys" (recommended) presses Pistol then Primary. Match them to your "Primary weapon" and "Secondary weapon" keys in game.</p></div></div>
+          <div class="card step"><div><b>Tune the timing</b><p>Drag the sliders or type a number in milliseconds. Press Test: it counts down 3 seconds then runs the sequence once.</p></div></div>
+          <div class="card step"><div><b>Turn it on in game</b><p>Press <span class="mini">F8</span>. You hear a high beep when it turns on. Closing the window keeps it running in the tray.</p></div></div>
+        </div>
+        <div class="card keys">
+          <div class="krow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><div class="tx"><b>Shoot</b><span>The trigger that starts the sequence</span></div><span class="cap txt">Left click</span></div>
+          <div class="krow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20 14 11M11 6c3-2 6-2 8 0-1 1-2 3-2 5l-3-3"/><path d="m14 8 3 3"/></svg></span><div class="tx"><b>Tomahawk</b><span>Your lethal / tomahawk key</span></div><span class="cap">E</span></div>
+          <div class="krow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg></span><div class="tx"><b>Weapon swap</b><span>Pistol key, then primary key</span></div><span class="caps"><span class="cap">2</span><span class="cap">1</span></span></div>
+          <div class="krow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></span><div class="tx"><b>On / Off</b><span>Toggle it any time, even in game</span></div><span class="cap">F8</span></div>
+          <div class="krow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><div class="tx"><b>Next profile</b><span>Cycle your saved timing profiles</span></div><span class="cap">F9</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="timing">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>Timing</div>
+      <h2>The four delays, explained</h2>
+      <p class="sub">All values are in milliseconds (0 to 1000). The app keeps them accurate to about 1 ms. These are good starting points; adjust for your connection and weapon.</p>
+      <div class="card timing">
+        <div class="trow"><b>Wait after shot</b><p>Time from your shot until the tomahawk key goes down. Too low and the shot may not register.</p><span class="val">40<u>ms</u></span></div>
+        <div class="trow"><b>Hold tomahawk</b><p>How long the tomahawk key is held. If it is too short the game ignores it, around 120 ms works well.</p><span class="val">120<u>ms</u></span></div>
+        <div class="trow"><b>Wait before swap</b><p>Extra wait before the pistol key. Hold + this wait is the time from tomahawk to swap.</p><span class="val">10<u>ms</u></span></div>
+        <div class="trow"><b>Swap and back gap</b><p>Time between the pistol key and the primary key.</p><span class="val">50<u>ms</u></span></div>
+      </div>
+      <div class="tips">
+        <div class="card tip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span><b>Tuning tip:</b> turn random timing off while tuning. Use the Test button, then try it in a private match before going online.</span></div>
+        <div class="card tip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span><b>Key log:</b> from the tray icon you can turn on a key log that shows exactly which keys were sent and when.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Screenshots</div>
+      <h2>Off and on</h2>
+      <p class="sub">The big power button glows orange when the cancel is active.</p>
+      <div class="gal">
+        <figure><div class="shot"><div class="in"><img src="assets/app-off.png" alt="Sniper Cancel turned off" loading="lazy" width="1280" height="2564"></div></div><figcaption>Cancel is off</figcaption></figure>
+        <figure><div class="shot"><div class="in"><img src="assets/app-on.png" alt="Sniper Cancel turned on" loading="lazy" width="1280" height="2564"></div></div><figcaption>Cancel is on</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7M12 17h.01"/></svg>FAQ</div>
+      <h2>Questions</h2>
+      <div class="faq">
+        <details class="card"><summary>Is this a hack or a cheat?</summary><p>No. It does not read or change game memory and does not touch game files. It only sends normal key presses, the same ones you could press yourself, just with exact timing.</p></details>
+        <details class="card"><summary>Can I get banned for using it?</summary><p>Any program that presses keys for you can be treated as a rule break by a game's anti-cheat, so there is always a risk. Use it at your own risk.</p></details>
+        <details class="card"><summary>It does nothing in game. What should I check?</summary><p>Make sure it is on (F8, high beep). If "Only inside the game" is on, click Detect and switch to the game within 5 seconds so it learns the game window. Also check your swap keys match the game's weapon keys.</p></details>
+        <details class="card"><summary>I end up stuck on the pistol.</summary><p>Use "Two keys" swap mode and set Pistol and Primary to the game's Secondary and Primary weapon keys. The app presses Primary again after 150 ms to make sure you come back.</p></details>
+        <details class="card"><summary>The tomahawk gets thrown instead of cancelled.</summary><p>Your hold time is probably too short or the swap comes too late. Raise "Hold tomahawk" to around 120 ms and keep "Wait before swap" small.</p></details>
+        <details class="card"><summary>I can't see the on-screen indicator.</summary><p>It can't draw over exclusive full screen. Set the game to borderless window mode.</p></details>
+        <details class="card"><summary>How do I close it completely?</summary><p>Closing the window keeps it running in the tray next to the clock. Right-click the tray icon and choose Exit.</p></details>
+        <details class="card"><summary>How do I update?</summary><p>When a new version is out, a banner appears at the top of the app. Click "Update now" and it downloads the new version and restarts by itself.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="wrap">
+      <div class="card band">
+        <div class="pw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg></div>
+        <h2>Get Sniper Cancel</h2>
+        <p class="sub">One small file for Windows 10 and 11. Free and open source.</p>
+        <a class="btn pri lg" href="https://github.com/iiKurro/sniper-cancel/releases/latest/download/SniperCancel.exe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download SniperCancel.exe
+        </a>
+        <p class="warn">Sniper Cancel is a fan-made tool and is not affiliated with any game publisher. Automated key presses may break a game's terms of service. Use at your own risk.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Sniper Cancel <span id="ver2"></span></span>
+    <span><a href="https://github.com/iiKurro/sniper-cancel">Source on GitHub</a> · <a href="https://github.com/iiKurro/sniper-cancel/releases">All releases</a></span>
+  </div>
+</footer>
+
+<script>
+// Show the explainer video once it exists (assets/demo.mp4 or a YouTube id).
+(function(){
+  var box=document.getElementById('videoBox'); if(!box) return;
+  var yt=box.dataset.youtube;
+  if(yt){
+    var f=document.createElement('iframe');
+    f.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(yt);
+    f.title='Sniper Cancel video guide'; f.allowFullscreen=true;
+    f.allow='accelerometer; encrypted-media; gyroscope; picture-in-picture';
+    box.appendChild(f); box.classList.add('has'); return;
+  }
+  var v=document.createElement('video');
+  v.controls=true; v.preload='metadata'; v.playsInline=true; v.poster='assets/app-on.png';
+  v.addEventListener('loadedmetadata',function(){ box.classList.add('has'); });
+  v.addEventListener('error',function(){ v.remove(); });
+  v.src=box.dataset.src; box.appendChild(v);
+})();
+// Latest version number from GitHub releases.
+fetch('https://api.github.com/repos/iiKurro/sniper-cancel/releases/latest')
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(d){ if(!d||!d.tag_name) return;
+    document.getElementById('ver').textContent=' · '+d.tag_name;
+    document.getElementById('ver2').textContent=d.tag_name; })
+  .catch(function(){});
+</script>
+</body>
+</html>
