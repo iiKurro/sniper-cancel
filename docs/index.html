@@ -424,7 +424,7 @@ footer a:hover{color:var(--acc)}
     box.appendChild(f); box.classList.add('has'); return;
   }
   var v=document.createElement('video');
-  v.controls=true; v.preload='metadata'; v.playsInline=true; v.poster='assets/app-on.png';
+  v.controls=true; v.preload='metadata'; v.playsInline=true; v.poster='assets/demo-poster.jpg';
   v.addEventListener('loadedmetadata',function(){ box.classList.add('has'); });
   v.addEventListener('error',function(){ v.remove(); });
   v.src=box.dataset.src; box.appendChild(v);
